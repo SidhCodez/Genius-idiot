@@ -454,20 +454,6 @@ if (error) {
 | AUTH-5 | On app load, check `supabase.auth.getSession()`; if none, redirect to `/login` (or `/setup`). |
 | AUTH-6 | Email confirmation is **disabled** for the hackathon (Supabase setting: "Confirm email" off). Reason: no email provider configured on free tier without setup; and judges signing up live must not be blocked. |
 
-**Demo-critical fallback (AUTH-7):**
-If auth is unstable during judging, the app must be able to run in **`localStorage` mode** — a single flag in `supabaseClient.js`:
-
-```js
-export const DEMO_MODE = false;  // flip to true if auth breaks
-```
-
-In demo mode:
-- No Supabase calls. Data lives in `localStorage`.
-- All `lib/` functions (projection, streaks) still run — they're pure.
-- App boots with pre-seeded demo data so the money demo (Journey C) works instantly.
-
-This is **insurance for the demo**, not a product feature. Build it on hour 30, not hour 5.
-
 ### 6.2 Authorization: Row Level Security (RLS)
 
 **The rule:** RLS is enabled on every table. No exceptions.

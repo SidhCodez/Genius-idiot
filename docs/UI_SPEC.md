@@ -353,7 +353,6 @@ App
 | Inputs | `bg-parchment border border-sand rounded-xl px-4 py-3 text-[15px] placeholder:text-mist focus:border-champagne focus:ring-2 focus:ring-champagne/20` |
 | Primary button | `bg-champagne text-obsidian font-medium rounded-xl px-4 py-3 w-full hover:bg-champagne-light transition` |
 | Toggle (login ↔ signup) | Text link, `text-champagne underline-offset-4 hover:underline` |
-| Demo link | `text-sm text-slate hover:text-ink` — this is the **`DEMO_MODE` fallback** (Architecture §5.3) surfaced as a first-class option, which is also a nice demo safety net |
 
 **States:**
 

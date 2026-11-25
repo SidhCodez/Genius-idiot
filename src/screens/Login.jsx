@@ -8,8 +8,7 @@ import Turnstile from '../components/Turnstile';
 import { CAPTCHA_ENABLED } from '../lib/captcha';
 
 export default function Login() {
-  const { authUser, logIn, signUp, resendConfirmation, requestPasswordReset, demoMode } =
-    useApp();
+  const { authUser, logIn, signUp, resendConfirmation, requestPasswordReset } = useApp();
   // Account creation comes first unless the link explicitly asks to log in.
   const [searchParams] = useSearchParams();
   const requestedMode = searchParams.get('mode');
@@ -26,7 +25,7 @@ export default function Login() {
   const [captchaKey, setCaptchaKey] = useState(0);
   const navigate = useNavigate();
 
-  const captchaRequired = CAPTCHA_ENABLED && !demoMode;
+  const captchaRequired = CAPTCHA_ENABLED;
   // Turnstile tokens are single-use, so remount the widget after every attempt.
   const resetCaptcha = () => {
     setCaptchaToken('');
@@ -64,9 +63,7 @@ export default function Login() {
         return;
       }
       setNotice(
-        demoMode
-          ? 'Demo mode has no real accounts — any email and password works, so there is nothing to reset.'
-          : 'If that address has an account, a reset link is on its way. Check your inbox and spam folder.',
+        'If that address has an account, a reset link is on its way. Check your inbox and spam folder.',
       );
       return;
     }
@@ -111,15 +108,6 @@ export default function Login() {
 
   return (
     <AuthLayout>
-        {demoMode && (
-          <p
-            role="status"
-            className="mt-4 rounded-xl border border-terracotta/40 bg-terracotta/10 px-3 py-2 text-xs text-terracotta text-center"
-          >
-            Demo mode — no real account is created and data stays in this browser.
-          </p>
-        )}
-
         {pendingEmail ? (
           <div className="app-card mt-8 grid gap-4 rounded-2xl p-5 sm:p-7">
             <MailCheck className="w-8 h-8 text-champagne" aria-hidden="true" />

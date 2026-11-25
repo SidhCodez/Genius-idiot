@@ -9,6 +9,7 @@ import { Button, Card, EmptyState, Skeleton } from '../components/ui';
 import GoalCard from '../components/GoalCard';
 import ProgressRing from '../components/ProgressRing';
 import TemplateGallery from '../components/TemplateGallery';
+import { DashboardTour } from '../components/OnboardingTour';
 
 const shortDay = (day) => format(fromDay(day), 'EEEEE');
 
@@ -52,7 +53,7 @@ export default function Today() {
 
   useEffect(() => {
     if (loading) return;
-    const visitKey = `gi:missed-day:${authUser?.id ?? 'demo'}`;
+    const visitKey = `gi:missed-day:${authUser?.id ?? 'signed-out'}`;
     if (checkedMissedDayRef.current === today) return;
     checkedMissedDayRef.current = today;
 
@@ -165,6 +166,7 @@ export default function Today() {
 
   return (
     <div>
+      <DashboardTour enabled={goals.length > 0} />
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl">
@@ -247,7 +249,7 @@ export default function Today() {
         </div>
       ) : (
         <div className="mt-6 grid gap-6 2xl:grid-cols-3">
-          <section className="min-w-0 2xl:col-span-2">
+          <section data-tour="today-queue" className="min-w-0 2xl:col-span-2">
             <div className="flex items-end justify-between gap-3">
               <div>
                 <h2 className="font-display text-2xl text-ink">Today's queue</h2>
@@ -326,6 +328,7 @@ export default function Today() {
               )}
             </div>
 
+            <div data-tour="next-up">
             <Card>
               <div className="flex items-center justify-between gap-3">
                 <h2 className="font-display text-xl text-ink">Up next</h2>
@@ -362,6 +365,7 @@ export default function Today() {
                 </ul>
               )}
             </Card>
+            </div>
 
             {sundayReview && (
               <Card>

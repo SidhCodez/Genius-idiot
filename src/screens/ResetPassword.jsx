@@ -42,7 +42,7 @@ function PasswordField({ label, value, onChange, autoComplete }) {
 // turns whichever one it is into a session, and that session is what unlocks the
 // form below. A link with no session left is genuinely dead.
 export default function ResetPassword() {
-  const { authUser, loading, demoMode, completePasswordRecovery, updatePassword } = useApp();
+  const { authUser, loading, completePasswordRecovery, updatePassword } = useApp();
   const [checking, setChecking] = useState(true);
   const [linkError, setLinkError] = useState('');
   const [password, setPassword] = useState('');
@@ -120,9 +120,7 @@ export default function ResetPassword() {
             </div>
             <h1 className="font-display text-2xl tracking-tight text-ink">Password updated</h1>
             <p className="text-sm text-slate">
-              {demoMode
-                ? 'Demo mode accepts any password, so nothing was stored. The flow is here so you can see what a real project does.'
-                : 'Use your new password the next time you log in. You are still signed in on this device.'}
+              Use your new password the next time you log in. You are still signed in on this device.
             </p>
             <Button onClick={() => navigate('/', { replace: true })} className="w-full">
               Go to today
@@ -149,15 +147,6 @@ export default function ResetPassword() {
             <p className="text-sm leading-6 text-slate">
               Updating the password for <span className="text-ink">{authUser.email}</span>.
             </p>
-
-            {demoMode && (
-              <p
-                role="status"
-                className="rounded-xl border border-terracotta/40 bg-terracotta/10 px-3 py-2 text-xs text-terracotta"
-              >
-                Demo mode — no real account exists, so no password is changed.
-              </p>
-            )}
 
             <PasswordField
               label="New password"

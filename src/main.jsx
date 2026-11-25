@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AppProvider } from './context/AppContext';
 import AppErrorBoundary from './components/AppErrorBoundary';
+import 'driver.js/dist/driver.css';
 import './index.css';
 
 // A recovery email should land on /reset-password, but if the project's

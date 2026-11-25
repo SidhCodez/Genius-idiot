@@ -29,13 +29,10 @@ npm run dev        # http://localhost:5173
 npm run test       # Vitest, one run
 ```
 
-With no Supabase environment variables the app runs in **demo mode**: data lives in `localStorage`,
-pre-seeded with 3 goals × 10 tasks, and any email/password logs you in. You do not need a Supabase
-project to work on UI, the engine, or the importers.
-
-To work against real data instead, copy `.env.example` to `.env` and fill it in, then apply
+To run the app, copy `.env.example` to `.env` and fill in your Supabase URL and anon key, then apply
 `supabase/schema.sql` in the Supabase SQL editor. Details are in
-[README §3](README.md#3-connect-a-real-supabase-project).
+[README §3](README.md#3-connect-a-real-supabase-project). There is no local fallback; the app always
+uses the configured Supabase project.
 
 Never commit `.env`. Never put the `service_role` key in a `VITE_*` variable — everything with that
 prefix ships to the browser. The publishable/anon key is the only key this app is allowed to hold.
@@ -54,7 +51,6 @@ Data flows down only. Keep it that way.
 |---|---|---|
 | `src/lib/` | pure computation | import React, touch the network, call `new Date()` |
 | `src/lib/repository.js` | talk to Supabase | contain UI or scheduling logic |
-| `src/lib/localRepository.js` | mirror the repository on `localStorage` | drift from `repository.js`'s contract |
 | `src/context/AppContext.jsx` | hold state, derive, apply optimistic actions | render markup |
 | `src/components/`, `src/screens/` | render, call actions | mutate context state directly |
 
@@ -63,8 +59,8 @@ function. That is what makes the engine testable and what keeps `planned_date` f
 drifting. If you add logic that decides what a user sees next, it belongs in `lib/` with a test, not
 in a component.
 
-If you change `repository.js`, mirror the change in `localRepository.js` in the same commit. Demo mode
-is the fallback we demo from when auth or the network dies; a divergence between the two is a bug.
+If you change `repository.js`, keep the optimistic updates in `AppContext.jsx` in sync with the
+returned shape. The repository is the only data-access layer.
 
 ---
 
@@ -170,9 +166,8 @@ Before you ask for review, confirm:
 
 - [ ] `npm run test` passes.
 - [ ] `npm run build` succeeds.
-- [ ] The app still runs in **demo mode** with an empty `.env` (delete `.env`, restart, check Today).
+- [ ] The app starts against a configured Supabase project (`.env` present, schema applied).
 - [ ] No new derived value is stored in the database, and no frozen decision moved.
-- [ ] `repository.js` and `localRepository.js` still agree.
 - [ ] No secret, key, or `.env` file is in the diff.
 - [ ] If the schema changed, `docs/DATABASE_SCHEMA.md` was updated in the same PR.
 - [ ] You rehearsed the missed-day shift once by hand: plan a task in the past, reload, confirm the
@@ -192,7 +187,7 @@ What happened:
 Steps to reproduce:  1. …  2. …  3. …
 Expected:
 Actual:
-Environment:         demo mode / real Supabase · browser + version
+Environment:         real Supabase · browser + version
 ```
 
 For scheduling bugs, include the goal's task list (`"order"`, `planned_date`, `completed_at`) and any

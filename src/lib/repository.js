@@ -3,8 +3,7 @@
 //   { ok: true, data }
 //   { ok: false, status, code, message, retryable }
 // An empty array from PATCH is treated as 404 (RLS makes "not owned" invisible).
-import { DEMO_MODE, supabase } from '../supabaseClient';
-import * as local from './localRepository';
+import { supabase } from '../supabaseClient';
 
 const fail = (status, code, message, retryable = false) => ({
   ok: false,
@@ -50,7 +49,6 @@ const authFail = (error, status) => {
 const unconfirmed = (user) => !user?.email_confirmed_at;
 
 export async function signUp(email, password, captchaToken) {
-  if (DEMO_MODE) return local.signUp(email, password);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -68,7 +66,6 @@ export async function signUp(email, password, captchaToken) {
 }
 
 export async function logIn(email, password, captchaToken) {
-  if (DEMO_MODE) return local.logIn(email, password);
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -92,7 +89,6 @@ export async function logIn(email, password, captchaToken) {
 }
 
 export async function resendConfirmation(email, captchaToken) {
-  if (DEMO_MODE) return local.resendConfirmation();
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email,
@@ -107,7 +103,6 @@ export async function resendConfirmation(email, captchaToken) {
 
 // Recovery: the email lands on /reset-password with a short-lived session.
 export async function requestPasswordReset(email, captchaToken) {
-  if (DEMO_MODE) return local.requestPasswordReset();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
     ...(captchaToken ? { captchaToken } : {}),
@@ -127,7 +122,6 @@ function clearRecoveryParams() {
 }
 
 export async function completePasswordRecovery() {
-  if (DEMO_MODE) return local.completePasswordRecovery();
 
   const url = new URL(window.location.href);
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
@@ -160,28 +154,24 @@ export async function completePasswordRecovery() {
 
 // Requires the recovery session (or an existing login) — Supabase rejects it otherwise.
 export async function updatePassword(password) {
-  if (DEMO_MODE) return local.updatePassword();
   const { data, error } = await supabase.auth.updateUser({ password });
   if (error) return authFail(error, error.status ?? 400);
   return { ok: true, data: data?.user ?? null };
 }
 
 export async function logOut() {
-  if (DEMO_MODE) return local.logOut();
   const { error } = await supabase.auth.signOut();
   if (error) return fromError(error, 500);
   return { ok: true, data: null };
 }
 
 export async function getCurrentUser() {
-  if (DEMO_MODE) return local.getCurrentUser();
   const { data, error } = await supabase.auth.getSession();
   if (error) return fromError(error, 401);
   return { ok: true, data: data.session?.user ?? null };
 }
 
 export function onAuthChange(callback) {
-  if (DEMO_MODE) return local.onAuthChange(callback);
   const { data } = supabase.auth.onAuthStateChange((event, session) => {
     callback(event, session?.user ?? null);
   });
@@ -190,7 +180,6 @@ export function onAuthChange(callback) {
 
 // ── Reads ───────────────────────────────────────────────────────────────────
 export async function fetchAll() {
-  if (DEMO_MODE) return local.fetchAll();
   const [goals, tasks, restDays] = await Promise.all([
     supabase.from('goals').select('*').order('created_at', { ascending: true }),
     supabase.from('tasks').select('*').order('goal_id', { ascending: true }).order('order', { ascending: true }),
@@ -203,12 +192,10 @@ export async function fetchAll() {
 }
 
 export async function getGoal(goalId) {
-  if (DEMO_MODE) return local.getGoal(goalId);
   return unwrap(await supabase.from('goals').select('*').eq('id', goalId).single());
 }
 
 export async function getTasksForGoal(goalId) {
-  if (DEMO_MODE) return local.getTasksForGoal(goalId);
   return unwrap(
     await supabase.from('tasks').select('*').eq('goal_id', goalId).order('order', { ascending: true }),
     { emptyIsOk: true },
@@ -216,7 +203,6 @@ export async function getTasksForGoal(goalId) {
 }
 
 export async function getRestDaysForGoal(goalId) {
-  if (DEMO_MODE) return local.getRestDaysForGoal(goalId);
   return unwrap(
     await supabase.from('rest_days').select('*').eq('goal_id', goalId).order('date', { ascending: true }),
     { emptyIsOk: true },
@@ -225,7 +211,6 @@ export async function getRestDaysForGoal(goalId) {
 
 // ── Goals ───────────────────────────────────────────────────────────────────
 export async function createGoal(goal) {
-  if (DEMO_MODE) return local.createGoal(goal);
   // `public_id` and `is_public` are database-managed and only exist after the
   // public-roadmap migration. Sending them from the client made every goal
   // insert fail with PGRST204 on projects that had not run it yet. The defaults
@@ -235,12 +220,10 @@ export async function createGoal(goal) {
 }
 
 export async function updateGoal(goalId, patch) {
-  if (DEMO_MODE) return local.updateGoal(goalId, patch);
   return unwrap(await supabase.from('goals').update(patch).eq('id', goalId).select());
 }
 
 export async function toggleGoalVisibility(goalId, isPublic) {
-  if (DEMO_MODE) return local.toggleGoalVisibility(goalId, isPublic);
   return unwrap(
     await supabase
       .from('goals')
@@ -254,7 +237,6 @@ export async function getPublicGoalByPublicId(publicId) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(publicId ?? '')) {
     return fail(404, 'PGRST116', 'Public roadmap not found.', false);
   }
-  if (DEMO_MODE) return local.getPublicGoalByPublicId(publicId);
   const { data, error } = await supabase.rpc('get_public_roadmap', { p_public_id: publicId });
   if (error) return fromError(error, error.status ?? 500);
   if (!data?.goal) return fail(404, 'PGRST116', 'Public roadmap not found.', false);
@@ -263,13 +245,11 @@ export async function getPublicGoalByPublicId(publicId) {
 
 // Deletes are idempotent: an empty array means it is already gone.
 export async function deleteGoal(goalId) {
-  if (DEMO_MODE) return local.deleteGoal(goalId);
   return unwrap(await supabase.from('goals').delete().eq('id', goalId).select(), { emptyIsOk: true });
 }
 
 // ── Tasks ───────────────────────────────────────────────────────────────────
 export async function createTask(task) {
-  if (DEMO_MODE) return local.createTask(task);
   // `notes` is nullable and was added after the first schema release. Avoid
   // sending an explicit null for it so older databases can still accept a
   // basic task while the user applies the current schema migration.
@@ -278,35 +258,29 @@ export async function createTask(task) {
 }
 
 export async function importTasks(tasks) {
-  if (DEMO_MODE) return local.importTasks(tasks);
   const rows = tasks.map(omitNullNotes);
   return unwrap(await supabase.from('tasks').insert(rows).select());
 }
 
 export async function updateTask(taskId, patch) {
-  if (DEMO_MODE) return local.updateTask(taskId, patch);
   return unwrap(await supabase.from('tasks').update(patch).eq('id', taskId).select());
 }
 
 export async function completeTask(taskId, at, minutes) {
-  if (DEMO_MODE) return local.completeTask(taskId, at, minutes);
   const patch = { completed_at: at };
   if (minutes != null) patch.minutes_spent = minutes;
   return updateTask(taskId, patch);
 }
 
 export async function undoTask(taskId) {
-  if (DEMO_MODE) return local.undoTask(taskId);
   return updateTask(taskId, { completed_at: null, minutes_spent: null });
 }
 
 export async function deleteTask(taskId) {
-  if (DEMO_MODE) return local.deleteTask(taskId);
   return unwrap(await supabase.from('tasks').delete().eq('id', taskId).select(), { emptyIsOk: true });
 }
 
 export async function reorderTask(taskId, newOrder) {
-  if (DEMO_MODE) return local.reorderTask(taskId, newOrder);
   const { error } = await supabase.rpc('reorder_task', { p_task_id: taskId, p_new_order: newOrder });
   if (error) return fromError(error, error.code === '42501' ? 403 : 400);
   return { ok: true, data: null };
@@ -314,7 +288,6 @@ export async function reorderTask(taskId, newOrder) {
 
 // ── Rest days ───────────────────────────────────────────────────────────────
 export async function markRestDay(goalId, date, hibernationId = null) {
-  if (DEMO_MODE) return local.markRestDay(goalId, date, hibernationId);
   const row = { goal_id: goalId, date };
   if (hibernationId) row.hibernation_id = hibernationId;
   const response = await supabase
@@ -327,7 +300,6 @@ export async function markRestDay(goalId, date, hibernationId = null) {
 }
 
 export async function cancelHibernation(hibernationId, fromDate) {
-  if (DEMO_MODE) return local.cancelHibernation(hibernationId, fromDate);
   return unwrap(
     await supabase.from('rest_days').delete().eq('hibernation_id', hibernationId).gte('date', fromDate).select(),
     { emptyIsOk: true },
@@ -335,18 +307,8 @@ export async function cancelHibernation(hibernationId, fromDate) {
 }
 
 export async function unmarkRestDay(goalId, date) {
-  if (DEMO_MODE) return local.unmarkRestDay(goalId, date);
   return unwrap(
     await supabase.from('rest_days').delete().eq('goal_id', goalId).eq('date', date).select(),
     { emptyIsOk: true },
   );
-}
-
-// Demo-mode insurance: wipe the seeded localStorage data and re-seed.
-export async function resetDemo() {
-  if (DEMO_MODE) {
-    local.resetDemoData();
-    return { ok: true, data: null };
-  }
-  return { ok: false, status: 400, code: null, message: 'Only available in demo mode.', retryable: false };
 }

@@ -92,7 +92,7 @@ export default function GoalCard({ goal, projection, streak, progress, restToday
               compact
               onSave={(notes) => updateTask(todayTask.id, { notes })}
             />
-            <div className="mt-4">
+            <div className="mt-4" data-tour="timer">
               <GoalTimer
                 goal={goal}
                 task={todayTask}

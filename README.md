@@ -38,7 +38,7 @@ light/dark themes and a plain-language in-app guide.
 ## Contents
 
 1. [What this app does](#1-what-this-app-does)
-2. [Run it in 2 minutes (demo mode)](#2-run-it-in-2-minutes-demo-mode)
+2. [Run it locally](#2-run-it-locally)
 3. [Connect a real Supabase project](#3-connect-a-real-supabase-project)
 4. [Your first five minutes](#4-your-first-five-minutes)
 5. [How the engine works](#5-how-the-engine-works)
@@ -82,20 +82,19 @@ never stored. That is why there is no cron job, no nightly job, no "mark overdue
 
 ---
 
-## 2. Run it in 2 minutes (demo mode)
+## 2. Run it locally
 
 ```bash
 npm install
+cp .env.example .env   # add your Supabase URL and anon key
 npm run dev
 ```
 
-Open http://localhost:5173. With no Supabase env vars the app runs in **demo mode**: data lives in
-`localStorage`, pre-seeded with 3 goals × 10 tasks. Log in with any email/password (it's pre-filled).
-Everything works offline, including completing tasks and shifts.
+Open http://localhost:5173. The app needs a Supabase project: copy `.env.example` to `.env`, fill in
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, then follow [section 3](#3-connect-a-real-supabase-project)
+to create the tables. There is no local fallback — without those values the client cannot start.
 
-The public landing page lives at `/welcome`; the app itself is at `/` once you are signed in. Demo
-mode is also your insurance: if the network or auth dies during a demo, set
-`VITE_DEMO_MODE=true` and the app keeps working from the browser.
+The public landing page lives at `/welcome`; the app itself is at `/` once you are signed in.
 
 ---
 
@@ -142,12 +141,11 @@ Copy `.env.example` to `.env`:
 ```bash
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<publishable / anon key>
-VITE_DEMO_MODE=false
 VITE_TURNSTILE_SITE_KEY=<optional Cloudflare Turnstile site key>
 ```
 
 - Use the **publishable / anon** key. **Never** put the `service_role` key in a frontend env var.
-- If either value is empty, the app silently falls back to demo mode.
+- Both Supabase values are required; the app does not fall back to local storage.
 
 ### 3.3 Email confirmation (optional without SMTP)
 
@@ -195,8 +193,8 @@ protect auth; the Supabase secret without a site key makes login fail because no
 ## 4. Your first five minutes
 
 1. **Create an account.** The app opens on account creation; a new user cannot get in without
-   signing up. Existing users switch to **Log in**. In demo mode any credentials work. The public
-   overview is at `/welcome`, with the simulator and FAQ.
+   signing up. Existing users switch to **Log in**. The public overview is at `/welcome`, with the
+   simulator and FAQ.
 2. **Set up a goal.** Name it (`DSA`), set daily minutes (`60`), write one line about why it matters,
    press **Add goal**.
 3. **Add its roadmap** — four ways, same result:
@@ -502,7 +500,6 @@ src/
     setupGate.js       per-user "Set up later" memory
     guide.js           per-user "How it works" memory
     repository.js      the ONLY file that talks to Supabase
-    localRepository.js localStorage implementation (demo mode)
   context/AppContext.jsx   state, derived data, optimistic actions, auth
   components/          presentational + domain components
     motion/            Framer Motion primitives (Card3D, ScrollReveal, …)
@@ -553,7 +550,6 @@ each sees zero of the other's goals (RLS), and rehearse the missed-day shift onc
 | "Reset link expired or already used" | the link was opened twice, or in a different browser | request a fresh link from Login → **Forgot password?** |
 | `email rate limit exceeded` (429) | too many signups per hour | wait, or disable confirmation |
 | PATCH/DELETE returns `[]` | RLS: the row isn't yours | the app treats it as 404 and rolls back the optimistic change |
-| App runs from `localStorage` unexpectedly | env vars empty → demo mode | fill in `.env` or set `VITE_DEMO_MODE=false` |
 | Reorder throws `23505` | unique constraint not deferrable | re-run `supabase/schema.sql` |
 | "Database not set up" toast | tables missing | run the schema |
 | "Public roadmap database changes are missing" | public sharing migration not applied | run `supabase/schema.sql` (or the public roadmap migration), then reload |
@@ -590,12 +586,12 @@ Written at the top of `src/lib/projection.js` and `src/lib/streaks.js`:
 | Doc | What it covers |
 |---|---|
 | `docs/PRD.md` | problem, users, requirements, MVP scope |
-| `docs/ARCHITECTURE.md` | four layers, data flow, demo mode |
+| `docs/ARCHITECTURE.md` | four layers, data flow, configuration |
 | `docs/DATABASE_SCHEMA.md` | tables, constraints, RLS, `reorder_task` |
 | `docs/REST_API_SPEC.md` | every endpoint and error contract |
 | `docs/UI_SPEC.md` | palette, typography, screens, states, a11y |
 | `docs/TRD.md` | stack, performance, security, testing (partially truncated at source) |
-| `docs/TESTING.md` | unit tests, API tests, RLS test, demo rehearsal |
+| `docs/TESTING.md` | unit tests, API tests, RLS test, manual rehearsal |
 | `docs/screenshots/` | the screenshots used at the top of this README |
 
 ---

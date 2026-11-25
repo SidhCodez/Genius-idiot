@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react';
 import * as repo from '../lib/repository';
-import { DEMO_MODE } from '../supabaseClient';
 import { addDay, todayOf } from '../lib/dates';
 import { computeProjection, computeShiftHistory, maxShift, nextStartDay } from '../lib/projection';
 import { computeOverallStreak, computeStreak } from '../lib/streaks';
@@ -298,7 +297,7 @@ export function AppProvider({ children }) {
       );
       return res;
     }
-    // Real mode returns the inserted row array; demo returns the object.
+    // The database returns the inserted row; keep the optimistic goal for now.
     return { ...res, data: goal };
   };
 
@@ -646,17 +645,11 @@ export function AppProvider({ children }) {
     setLoading(false);
   };
 
-  const resetDemo = async () => {
-    await repo.resetDemo();
-    await reload();
-  };
-
   const value = {
     authUser,
     authLoadError,
     dataLoadError,
     loading,
-    demoMode: DEMO_MODE,
     today,
     goals: data.goals,
     tasks: data.tasks,
@@ -683,7 +676,6 @@ export function AppProvider({ children }) {
     completePasswordRecovery,
     updatePassword,
     logOut,
-    resetDemo,
     completeTask,
     undoTask,
     addGoal,

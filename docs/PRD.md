@@ -313,7 +313,7 @@ Streaks, heat map, shifts, and progress are **calculated** from `tasks.completed
 ## 13. User Journeys
 
 ### Journey A — First-time onboarding (target: ≤ 3 minutes)
-1. Open app → sign up (email/password) *or* enter `localStorage` demo mode.
+1. Open app → sign up (email/password).
 2. Create goal #1: "DSA", 60 min/day.
 3. Paste Markdown roadmap → **preview parsed tasks** → confirm.
 4. Create goal #2: "Web Dev", 70 min/day → import → confirm.
@@ -368,9 +368,8 @@ Streaks, heat map, shifts, and progress are **calculated** from `tasks.completed
 | 9 | Responsive pass + deploy on Vercel | Ship |
 
 **Hackathon tips for a beginner team:**
-- **Do steps 1–6 with `localStorage` first.** You'll validate the streak/shift psychology before touching auth. Promote the "even simpler v0" path — it's the safest demo.
+- **Do steps 1–6 against a real Supabase project.** You'll validate the streak/shift psychology with the same data path production uses.
 - **Build Journey C as a scripted demo.** It's the one thing that sells the product; rehearse it.
-- **Have a fallback:** if Supabase auth breaks live, flip to `localStorage` demo mode (FR-A3).
 - **Don't over-build the UI.** Tailwind + Recharts + a CSS-grid heat map gets you 90% of the "wow" for 10% of the effort.
 
 **Acceptance criteria (MVP is done when…):**
@@ -454,7 +453,7 @@ Streaks, heat map, shifts, and progress are **calculated** from `tasks.completed
 | A3 | 1 task = 1 day is an acceptable simplification for v1; variable task sizes are a v2 concern. |
 | A4 | In-app notifications are sufficient; no email/push needed. |
 | A5 | Supabase + Vercel free tiers are enough for single-user data volume (< 10 MB). |
-| A6 | Judges/users will accept a `localStorage` demo mode if auth fails live. |
+| A6 | Supabase stays available during judging; the app has no local fallback. |
 | A7 | The team can ship steps 1–6 in the hackathon window; steps 7–9 are stretch. |
 | A8 | No AI features are expected or required by the hackathon brief. |
 

@@ -447,3 +447,76 @@
     opacity: 1;
   }
 }
+
+/* Onboarding tour (driver.js) — keep the popover on the app's calm palette. */
+.driver-popover.gi-tour {
+  max-width: 340px;
+  padding: 18px;
+  border: 1px solid rgb(var(--sand));
+  border-radius: 16px;
+  background-color: rgb(var(--parchment));
+  color: rgb(var(--ink));
+  box-shadow: var(--shadow-card);
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+.driver-popover.gi-tour .driver-popover-title {
+  font-family: "Instrument Serif", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+  color: rgb(var(--ink));
+}
+.driver-popover.gi-tour .driver-popover-description {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgb(var(--slate));
+}
+.driver-popover.gi-tour .driver-popover-progress-text {
+  color: rgb(var(--mist));
+  font-size: 12px;
+}
+.driver-popover.gi-tour .driver-popover-footer {
+  margin-top: 16px;
+  gap: 8px;
+}
+.driver-popover.gi-tour .driver-popover-footer-btn {
+  border: 1px solid rgb(var(--sand));
+  border-radius: 10px;
+  padding: 7px 12px;
+  background-color: rgb(var(--ivory));
+  color: rgb(var(--ink));
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+.driver-popover.gi-tour .driver-popover-footer-btn:hover,
+.driver-popover.gi-tour .driver-popover-footer-btn:focus-visible {
+  background-color: rgb(var(--sand));
+}
+.driver-popover.gi-tour .driver-popover-next-btn {
+  border-color: transparent;
+  background-color: rgb(var(--champagne));
+  color: rgb(var(--linen));
+}
+.driver-popover.gi-tour .driver-popover-next-btn:hover,
+.driver-popover.gi-tour .driver-popover-next-btn:focus-visible {
+  background-color: rgb(var(--champagne-light));
+}
+.driver-popover.gi-tour .gi-tour-skip {
+  all: unset;
+  margin-right: auto;
+  cursor: pointer;
+  color: rgb(var(--mist));
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.driver-popover.gi-tour .gi-tour-skip:hover,
+.driver-popover.gi-tour .gi-tour-skip:focus-visible {
+  color: rgb(var(--ink));
+}
+.driver-popover.gi-tour .driver-popover-arrow-side-left { border-right-color: rgb(var(--parchment)); }
+.driver-popover.gi-tour .driver-popover-arrow-side-right { border-left-color: rgb(var(--parchment)); }
+.driver-popover.gi-tour .driver-popover-arrow-side-top { border-bottom-color: rgb(var(--parchment)); }
+.driver-popover.gi-tour .driver-popover-arrow-side-bottom { border-top-color: rgb(var(--parchment)); }

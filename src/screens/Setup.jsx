@@ -11,6 +11,7 @@ import LongFormTaskForm from '../components/LongFormTaskForm';
 import ThemeToggle from '../components/ThemeToggle';
 import { skipSetup } from '../lib/setupGate';
 import TemplateGallery from '../components/TemplateGallery';
+import { SetupTour } from '../components/OnboardingTour';
 
 // Onboarding: create goals, import a roadmap for each, then continue.
 export default function Setup() {
@@ -69,7 +70,10 @@ export default function Setup() {
     <main className="min-h-[100dvh] bg-ivory px-4 py-8 sm:px-6 sm:py-10 lg:py-14">
       <div className="mx-auto w-full max-w-5xl">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2 font-display text-xl tracking-tight text-ink sm:text-2xl">
+          <div
+            data-tour="setup-brand"
+            className="flex min-w-0 items-center gap-2 font-display text-xl tracking-tight text-ink sm:text-2xl"
+          >
             <BrandLogo className="h-9 w-9 rounded-lg bg-white" />
             <span>GENIUS IDIOT</span>
           </div>
@@ -100,6 +104,7 @@ export default function Setup() {
         <Card className="mt-8">
           <form onSubmit={create} className="grid sm:grid-cols-[1fr_140px_auto] gap-3 items-end">
             <Input
+              data-tour="goal-name"
               label="Goal name"
               placeholder="DSA"
               required
@@ -108,6 +113,7 @@ export default function Setup() {
               onChange={(event) => setName(event.target.value)}
             />
             <Input
+              data-tour="daily-minutes"
               label="Daily minutes"
               type="number"
               min="5"
@@ -127,145 +133,147 @@ export default function Setup() {
         </Card>
 
         {goals.length === 0 ? (
-          <TemplateGallery className="mt-8" />
-        ) : (
-          <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-            <TemplateGallery
-              vertical
-              className="order-2 lg:order-1 lg:sticky lg:top-6"
-            />
-
-            <Card className="order-1 min-w-0 lg:order-2">
+          <>
+            <Card className="mt-8">
               <h2 className="font-display text-xl text-ink">Add tasks to this goal</h2>
               <p className="mt-1 text-sm text-slate">
-                Pick a goal, then choose a style: one task per day, or one long-form task that
-                spans a date range.
+                Create a goal above first. Then choose one task per day, or one long-form task
+                that spans a date range.
               </p>
+            </Card>
+            <TemplateGallery className="mt-8" />
+          </>
+        ) : (
+          <Card className="mt-8 min-w-0">
+            <h2 className="font-display text-xl text-ink">Add tasks to this goal</h2>
+            <p className="mt-1 text-sm text-slate">
+              Pick a goal, then choose a style: one task per day, or one long-form task that
+              spans a date range.
+            </p>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {goals.map((goal) => {
-                  const active = selectedGoal?.id === goal.id;
-                  const done = taskCount(goal.id) > 0;
-                  return (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {goals.map((goal) => {
+                const active = selectedGoal?.id === goal.id;
+                const done = taskCount(goal.id) > 0;
+                return (
+                  <button
+                    key={goal.id}
+                    type="button"
+                    onClick={() => setSelected(goal.id)}
+                    aria-pressed={active}
+                    className={`inline-flex min-h-[44px] max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
+                      active
+                        ? 'bg-sand text-ink border-sand'
+                        : 'bg-ivory text-ink border-sand hover:border-ink'
+                    }`}
+                  >
+                    {done && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-sage" aria-hidden="true" />}
+                    <span className="min-w-0 break-words">{goal.name}</span>
+                    <span className="shrink-0 text-mist">
+                      {taskCount(goal.id)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {selectedGoal && (
+              <div className="mt-6">
+                <div
+                  role="radiogroup"
+                  aria-label="Task style"
+                  className="grid gap-2 sm:grid-cols-2"
+                >
+                  {[
+                    {
+                      id: 'queue',
+                      label: 'One task per day',
+                      hint: 'The classic queue: a task lands each day.',
+                    },
+                    {
+                      id: 'long',
+                      label: 'Long-form task',
+                      hint: 'One task that runs across a date range.',
+                    },
+                  ].map((style) => (
                     <button
-                      key={goal.id}
+                      key={style.id}
+                      role="radio"
                       type="button"
-                      onClick={() => setSelected(goal.id)}
-                      aria-pressed={active}
-                      className={`inline-flex min-h-[44px] max-w-full items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
-                        active
-                          ? 'bg-sand text-ink border-sand'
-                          : 'bg-ivory text-ink border-sand hover:border-ink'
+                      aria-checked={taskStyle === style.id}
+                      onClick={() => setTaskStyle(style.id)}
+                      className={`rounded-xl border p-3 text-left transition ${
+                        taskStyle === style.id
+                          ? 'border-champagne bg-champagne/10'
+                          : 'border-sand bg-ivory hover:border-ink'
                       }`}
                     >
-                      {done && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-sage" aria-hidden="true" />}
-                      <span className="min-w-0 break-words">{goal.name}</span>
-                      <span className="shrink-0 text-mist">
-                        {taskCount(goal.id)}
-                      </span>
+                      <span className="block text-sm font-medium text-ink">{style.label}</span>
+                      <span className="mt-0.5 block text-xs text-slate">{style.hint}</span>
                     </button>
-                  );
-                })}
-              </div>
-
-              {selectedGoal && (
-                <div className="mt-6">
-                  <div
-                    role="radiogroup"
-                    aria-label="Task style"
-                    className="grid gap-2 sm:grid-cols-2"
-                  >
-                    {[
-                      {
-                        id: 'queue',
-                        label: 'One task per day',
-                        hint: 'The classic queue: a task lands each day.',
-                      },
-                      {
-                        id: 'long',
-                        label: 'Long-form task',
-                        hint: 'One task that runs across a date range.',
-                      },
-                    ].map((style) => (
-                      <button
-                        key={style.id}
-                        role="radio"
-                        type="button"
-                        aria-checked={taskStyle === style.id}
-                        onClick={() => setTaskStyle(style.id)}
-                        className={`rounded-xl border p-3 text-left transition ${
-                          taskStyle === style.id
-                            ? 'border-champagne bg-champagne/10'
-                            : 'border-sand bg-ivory hover:border-ink'
-                        }`}
-                      >
-                        <span className="block text-sm font-medium text-ink">{style.label}</span>
-                        <span className="mt-0.5 block text-xs text-slate">{style.hint}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {taskStyle === 'queue' ? (
-                    <div className="mt-5">
-                      <div
-                        role="tablist"
-                        aria-label="Roadmap entry method"
-                        className="mb-5 grid w-full grid-cols-1 gap-1 rounded-xl border border-sand bg-ivory p-1 sm:inline-flex sm:w-auto"
-                      >
-                        {[
-                          { id: 'cards', label: 'Card builder' },
-                          { id: 'markdown', label: 'Markdown' },
-                          { id: 'paste', label: 'Quick paste' },
-                        ].map((tab) => (
-                          <button
-                            key={tab.id}
-                            role="tab"
-                            type="button"
-                            aria-selected={method === tab.id}
-                            onClick={() => setMethod(tab.id)}
-                            className={`min-h-[44px] whitespace-nowrap rounded-lg px-3 py-2 text-sm transition ${
-                              method === tab.id
-                                ? 'bg-sand text-ink'
-                                : 'text-slate hover:text-ink'
-                            }`}
-                          >
-                            {tab.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {method === 'cards' && (
-                        <TaskCardBuilder
-                          key={`cards-${selectedGoal.id}`}
-                          startDay={today}
-                          importLabel={`Add to ${selectedGoal.name}`}
-                          onImport={handleImport}
-                        />
-                      )}
-                      {method === 'markdown' && (
-                        <MarkdownImporter
-                          key={`md-${selectedGoal.id}`}
-                          startDay={today}
-                          importLabel={`Import into ${selectedGoal.name}`}
-                          onImport={handleImport}
-                        />
-                      )}
-                      {method === 'paste' && (
-                        <QuickImport
-                          key={`paste-${selectedGoal.id}`}
-                          startDay={today}
-                          importLabel={`Add to ${selectedGoal.name}`}
-                          onImport={handleImport}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <LongFormTaskForm key={`long-${selectedGoal.id}`} goal={selectedGoal} />
-                  )}
+                  ))}
                 </div>
-              )}
-            </Card>
-          </div>
+
+                {taskStyle === 'queue' ? (
+                  <div className="mt-5">
+                    <div
+                      role="tablist"
+                      aria-label="Roadmap entry method"
+                      className="mb-5 grid w-full grid-cols-1 gap-1 rounded-xl border border-sand bg-ivory p-1 sm:inline-flex sm:w-auto"
+                    >
+                      {[
+                        { id: 'cards', label: 'Card builder' },
+                        { id: 'markdown', label: 'Markdown' },
+                        { id: 'paste', label: 'Quick paste' },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          role="tab"
+                          type="button"
+                          aria-selected={method === tab.id}
+                          onClick={() => setMethod(tab.id)}
+                          className={`min-h-[44px] whitespace-nowrap rounded-lg px-3 py-2 text-sm transition ${
+                            method === tab.id
+                              ? 'bg-sand text-ink'
+                              : 'text-slate hover:text-ink'
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {method === 'cards' && (
+                      <TaskCardBuilder
+                        key={`cards-${selectedGoal.id}`}
+                        startDay={today}
+                        importLabel={`Add to ${selectedGoal.name}`}
+                        onImport={handleImport}
+                      />
+                    )}
+                    {method === 'markdown' && (
+                      <MarkdownImporter
+                        key={`md-${selectedGoal.id}`}
+                        startDay={today}
+                        importLabel={`Import into ${selectedGoal.name}`}
+                        onImport={handleImport}
+                      />
+                    )}
+                    {method === 'paste' && (
+                      <QuickImport
+                        key={`paste-${selectedGoal.id}`}
+                        startDay={today}
+                        importLabel={`Add to ${selectedGoal.name}`}
+                        onImport={handleImport}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <LongFormTaskForm key={`long-${selectedGoal.id}`} goal={selectedGoal} />
+                )}
+              </div>
+            )}
+          </Card>
         )}
 
         <div className="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -278,7 +286,10 @@ export default function Setup() {
             Go to today
           </Button>
         </div>
+
+        {goals.length > 0 && <TemplateGallery className="mt-10" />}
       </div>
+      <SetupTour enabled={goals.length === 0} />
     </main>
   );
 }

@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Moon, Pencil, RefreshCcw, Trash2 } from 'lucide-react';
+import { Download, LogOut, Moon, Pencil, Trash2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatDay } from '../lib/dates';
-import { Button, Card, Divider, Input, Select } from '../components/ui';
+import { Button, Card, Input, Select } from '../components/ui';
 import Modal from '../components/Modal';
 
 export default function Settings() {
   const {
     authUser,
-    demoMode,
     today,
     goals,
     tasks,
@@ -19,14 +18,12 @@ export default function Settings() {
     markRestDay,
     unmarkRestDay,
     logOut,
-    resetDemo,
     notify,
   } = useApp();
   const navigate = useNavigate();
 
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
-  const [resetting, setResetting] = useState(false);
   const [restGoal, setRestGoal] = useState(goals[0]?.id ?? '');
   const [restDate, setRestDate] = useState(today);
 
@@ -48,7 +45,6 @@ export default function Settings() {
         <h1 className="font-display text-2xl text-ink sm:text-3xl">Settings</h1>
         <p className="mt-1 break-words text-sm text-slate">
           {authUser?.email}
-          {demoMode && ' · demo data lives in this browser'}
         </p>
       </div>
 
@@ -171,12 +167,6 @@ export default function Settings() {
             <LogOut className="w-4 h-4" aria-hidden="true" />
             Log out
           </Button>
-          {demoMode && (
-            <Button variant="ghost" onClick={() => setResetting(true)}>
-              <RefreshCcw className="w-4 h-4" aria-hidden="true" />
-              Reset demo data
-            </Button>
-          )}
         </div>
       </Card>
 
@@ -259,35 +249,6 @@ export default function Settings() {
             This deletes the goal, its {tasks.filter((task) => task.goal_id === deleting.id).length}{' '}
             tasks, and its rest days. It cannot be undone.
           </p>
-        </Modal>
-      )}
-
-      {resetting && (
-        <Modal
-          title="Reset demo data?"
-          onClose={() => setResetting(false)}
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setResetting(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="danger"
-                onClick={async () => {
-                  await resetDemo();
-                  setResetting(false);
-                  notify('Demo data reset.', 'success');
-                }}
-              >
-                Reset
-              </Button>
-            </>
-          }
-        >
-          <p className="text-sm text-slate">
-            Everything in this browser's demo store is replaced with the seeded example.
-          </p>
-          <Divider />
         </Modal>
       )}
     </div>

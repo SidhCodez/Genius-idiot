@@ -6,7 +6,6 @@ const { insert, from } = vi.hoisted(() => ({
 }));
 
 vi.mock('../supabaseClient', () => ({
-  DEMO_MODE: false,
   supabase: { from },
 }));
 

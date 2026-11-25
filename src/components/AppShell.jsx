@@ -173,7 +173,7 @@ function SidePanel({ onNavigate, compact = false, onFeedback }) {
 }
 
 export default function AppShell() {
-  const { authUser, demoMode, logOut, today } = useApp();
+  const { authUser, logOut, today } = useApp();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -226,7 +226,10 @@ export default function AppShell() {
     <div className="min-h-screen w-full bg-parchment">
       <div className="flex min-h-screen w-full flex-col bg-parchment sm:flex-row">
         {sidebarOpen && (
-          <aside className="hidden w-64 shrink-0 flex-col border-r border-sand bg-parchment p-5 lg:flex xl:w-[272px]">
+          <aside
+            data-tour="sidebar"
+            className="hidden w-64 shrink-0 flex-col border-r border-sand bg-parchment p-5 lg:flex xl:w-[272px]"
+          >
             <SidePanel onFeedback={openFeedback} />
           </aside>
         )}
@@ -278,12 +281,6 @@ export default function AppShell() {
               <BookOpen className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Templates</span>
             </Link>
-
-            {demoMode && (
-              <span className="shrink-0 rounded-full border border-champagne/40 bg-champagne/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-champagne">
-                Demo
-              </span>
-            )}
 
             <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
               <ThemeToggle />

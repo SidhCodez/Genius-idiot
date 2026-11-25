@@ -41,7 +41,6 @@ Test in that order. Stop when you run out of time — you'll have covered the fa
 
 1. **Test the pure functions first.** `lib/projection.js` and `lib/streaks.js` are where bugs hurt most, and they're trivial to test with Vitest. A 30-minute investment here pays for the whole hackathon.
 2. **Test the money demo manually, three times.** Journey C (missed day → shift) is what judges remember. Rehearse it.
-3. **Test the demo-mode fallback.** If auth breaks live, the repository flag (`DEMO_MODE`) must work. This is the insurance policy — test that the policy works.
 
 ---
 
@@ -857,13 +856,13 @@ Run this **the morning of the demo**, on the actual device you'll demo on.
 - [ ] **Log out → log in** — data still there
 - [ ] **Different browser** — log in, data synced from Supabase
 
-### 7.5 The fallback path (critical for demo resilience)
+### 7.5 The configuration path
 
-- [ ] **Flip `DEMO_MODE = true`** → app still loads with seeded localStorage data
-- [ ] **In demo mode**, complete a task → projection updates → data survives a reload
-- [ ] **Flip back to `false`** → app returns to Supabase mode
+- [ ] **`.env` has both Supabase values** → app loads and reaches Today
+- [ ] **Remove one value, restart** → the app fails loudly instead of silently using local data
+- [ ] **Apply `supabase/schema.sql`** → signup, goal creation, and task completion all persist
 
-If the demo-mode fallback doesn't work, you have no safety net. Test it or accept the risk.
+A missing environment value is a setup error. Fix the configuration; there is no fallback path.
 
 ### 7.6 The demo script (rehearse 3 times)
 
@@ -947,7 +946,6 @@ On each P0 browser, open dev tools and verify:
 - [ ] **Network:** zero 4xx/5xx on a normal flow
 - [ ] **Network:** `service_role` key does not appear in any request body or response
 - [ ] **Application → Local Storage:** contains `sb-<project>-auth-token` (session) and no PII beyond email
-- [ ] **Application → Local Storage** in demo mode: contains the demo data seed
 
 ### 8.6 The "judge's device" wildcard test
 
@@ -993,10 +991,10 @@ A 20-row bug log is worth more than a perfect memory during a 48-hour sprint.
 │  T-35  Full manual walkthrough on laptop (§7)     10 min   │
 │  T-25  Full manual walkthrough on phone (§7)      10 min   │
 │  T-15  Money demo rehearsal (§6.3)                 5 min   │
-│  T-10  Demo-mode fallback test (§7.5)              3 min   │
+│  T-10  Configuration check (§7.5)                  3 min   │
 │  T-7   Clear test data from Supabase               2 min   │
 │  T-5   Fresh demo login, close all other tabs      2 min   │
-│  T-3   Hard refresh, verify empty state / demo data 2 min  │
+│  T-3   Hard refresh, verify the empty state        2 min   │
 │  T-0   Demo starts                                          │
 └─────────────────────────────────────────────────────────────┘
 ```

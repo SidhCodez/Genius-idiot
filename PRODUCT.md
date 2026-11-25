@@ -16,14 +16,13 @@ A private, minimal study and work tracker built on the core promise: "A missed d
 Rolling per-goal queues where schedules and dates are derived dynamically from completed work, rather than stored as fixed deadlines. No cascading database updates, no overdue debt, no guilt.
 
 ## Operating Context
-Daily study sessions on desktop and mobile web browsers. Students review their daily tasks on the Today view, complete work or record rest days, and track long-term progress via derived shift graphs, streaks, and completion heatmaps. Works online with Supabase sync and offline via zero-config browser localStorage demo mode.
+Daily study sessions on desktop and mobile web browsers. Students review their daily tasks on the Today view, complete work or record rest days, and track long-term progress via derived shift graphs, streaks, and completion heatmaps. Requires a network connection to Supabase.
 
 ## Capabilities and Constraints
 - Capabilities:
   - Per-goal ordered task queues with atomic reordering (`reorder_task` RPC).
   - Pure functional projection engine (`src/lib/`): calculated projected dates, streak calculation, and shift history without cron jobs or database batch updates.
   - Partial completion tracking and rest days.
-  - Demo mode fallback in browser storage when Supabase environment variables are missing or offline.
   - Roadmap parser for Markdown / CSV / text import.
 - Constraints (Deliberately frozen):
   - Planned date is a frozen snapshot created upon import/creation; never modified.
@@ -41,7 +40,6 @@ Daily study sessions on desktop and mobile web browsers. Students review their d
 - Full codebase with completed MVP in React + Vite + Tailwind + Supabase.
 - Comprehensive documentation in `docs/` (`PRD.md`, `ARCHITECTURE.md`, `DATABASE_SCHEMA.md`, `REST_API_SPEC.md`, `UI_SPEC.md`, `TESTING.md`).
 - Working test suite in `src/__tests__/` verifying core projection, streak, and calendar calculation logic.
-- Seeded roadmap presets in demo mode.
 
 ## Product Principles
 1. Missed days never become overdue debt — daily workload stays constant, only the finish date shifts.

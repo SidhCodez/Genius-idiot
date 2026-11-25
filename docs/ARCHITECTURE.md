@@ -137,8 +137,6 @@ The frontend is organized into **four horizontal layers**. Each layer only talks
 │       fetchAll(), createGoal(), updateTask(),                │
 │       deleteGoal(), insertTasks(), …                         │
 │   • Normalizes errors into a consistent shape                │
-│   • Swappable: the demo-mode (localStorage) implementation   │
-│     lives in the same file behind a flag                     │
 │                                                              │
 │  Does NOT: contain business logic, render anything           │
 └──────────────────────────┬───────────────────────────────────┘
@@ -149,11 +147,10 @@ The frontend is organized into **four horizontal layers**. Each layer only talks
                     └─────────────┘
 ```
 
-**Why a repository layer even in a hackathon?** It's ~60 lines of code and buys three things:
+**Why a repository layer even in a hackathon?** It's ~60 lines of code and buys two things:
 
-1. **Demo-mode swap.** If Supabase auth breaks during judging, flipping `DEMO_MODE = true` routes every call to a localStorage implementation. No component changes. (This is the TRD's AUTH-7 fallback.)
-2. **Contained blast radius.** If the Supabase SDK has a breaking change or an error shape surprise, only one file changes.
-3. **Clean tests.** `lib/projection.js` doesn't care where data came from — so tests are trivial.
+1. **Contained blast radius.** If the Supabase SDK has a breaking change or an error shape surprise, only one file changes.
+2. **Clean tests.** `lib/projection.js` doesn't care where data came from — so tests are trivial.
 
 This is a *senior architect move that costs almost nothing*. A beginner team can implement it in an hour and it makes the whole codebase easier to reason about.
 
@@ -573,26 +570,11 @@ Browser (supabase-js)                        Supabase (PostgREST + Postgres)
 
 **What you write:** an `AuthGuard` component that wraps protected routes, and a single `onAuthStateChange` subscription in `AppContext` that triggers `reload()` on login and clears state on logout. That's it — ~30 lines total.
 
-### 5.3 The demo-mode fallback (architecture, not a hack)
+### 5.3 Configuration (no local fallback)
 
-The TRD defines `DEMO_MODE` as a flag in `supabaseClient.js`. Architecturally, this is implemented in the **repository layer**, not scattered through components:
-
-```js
-// lib/repository.js
-import { supabase } from '../supabaseClient';
-import * as localRepo from './localRepository';
-
-const impl = DEMO_MODE ? localRepo : supabaseRepo;
-
-export const fetchAll     = () => impl.fetchAll();
-export const createGoal   = (g) => impl.createGoal(g);
-export const completeTask = (id, at) => impl.completeTask(id, at);
-// …etc
-```
-
-**Why this belongs in the repository:** the rest of the app (context, `lib/`, components) never knows whether data comes from Supabase or `localStorage`. The `lib/` pure functions — which contain the entire product value — are identical in both modes. If auth fails during judging, the demo continues with zero UI changes.
-
-**This is a legitimate architecture pattern** (the repository/strategy pattern). It's not a hackathon hack — it's how you'd support multiple data sources in a production app. The hackathon just makes the second implementation trivial.
+The app reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from the environment and creates one
+Supabase client in `supabaseClient.js`. Both values are required. A missing value is a setup error:
+fix it in `.env` (see README §3.2), rather than switching the client to another data source.
 
 ### 5.4 Authorization recap
 
@@ -906,31 +888,6 @@ UI renders:
 
 **Say this to judges:** *"Notice what didn't happen. No database update. No background job. No email. The missed day is just... a fact about `completed_at` being null. The projection re-derives from that fact. That's the whole product."*
 
-### 7.7 Flow: demo-mode fallback (if auth fails live)
-
-```
-DEMO_MODE = true  (flip one flag, redeploy or use a query param)
-   │
-   ▼
-repository.js routes all calls to lib/localRepository.js
-   │
-   ├─ fetchAll()       → JSON.parse(localStorage.getItem('gi:data'))
-   ├─ completeTask()   → mutate in-memory + localStorage.setItem
-   ├─ insertTasks()    → same
-   └─ …
-   │
-   ▼
-AppContext, useMemos, lib/ pure functions, all components: UNCHANGED
-   │
-   ▼
-App boots with pre-seeded demo data
-   │
-   ▼
-Journey C demo proceeds exactly as planned
-```
-
-**The architectural payoff:** because the repository is the only data-access boundary, the entire demo survives an auth outage with a one-line change. This is what the layered architecture buys you.
-
 ---
 
 ## 8. Folder Structure
@@ -961,7 +918,7 @@ genius-idiot/
     │
     ├── main.jsx                # ReactDOM.createRoot; wraps App in providers
     ├── App.jsx                 # <AppProvider> + <RouterProvider> + route table
-    ├── supabaseClient.js       # createClient(URL, ANON_KEY); exports DEMO_MODE flag
+    ├── supabaseClient.js       # createClient(URL, ANON_KEY)
     │
     ├── context/
     │   └── AppContext.jsx      # THE application state layer
@@ -978,9 +935,7 @@ genius-idiot/
     │   ├── dates.js            # thin date-fns wrappers; today(), addDays(), diffDays()
     │   ├── progress.js         # computeProgress(tasks) -> {done, total, pct, eta}
     │   ├── repository.js       # LAYER 4: data access — the ONLY Supabase consumer
-    │   │                       #   routes to localRepository when DEMO_MODE
-    │   └── localRepository.js  # localStorage implementation (demo mode)
-    │
+    │   │
     ├── components/             # LAYER 1: reusable presentational pieces
     │   ├── SidePanel.jsx       # goal list + navigation
     │   ├── GoalCard.jsx        # today view card per goal
@@ -1027,9 +982,9 @@ genius-idiot/
 
 | Component | Layer | Responsibility | Reads from | Writes to |
 |---|---|---|---|---|
-| **`supabaseClient.js`** | Infra | Creates the Supabase client once; exports `DEMO_MODE` | env vars | — |
+| **`supabaseClient.js`** | Infra | Creates the Supabase client once | env vars | — |
 | **`AppProvider` / `useApp()`** | State | Single source of truth; actions; memoized derived data | repository | repository + local state |
-| **`repository.js`** | Data access | One function per operation; normalizes errors; demo-mode switch | Supabase / localStorage | Supabase / localStorage |
+| **`repository.js`** | Data access | One function per operation; normalizes errors | Supabase | Supabase |
 | **`projection.js`** | Domain | `computeProjection(tasks, today)` → per-task projected date + shift | plain tasks array | returns plain array |
 | **`streaks.js`** | Domain | `computeStreak(tasks, restDays, today)` → `{current, longest}` | plain arrays | returns object |
 | **`markdown.js`** | Domain | `parseMarkdown(text)` → `{goalName, tasks, errors}` | string | returns object |
@@ -1084,7 +1039,6 @@ Everything else is presentation. This is why the architecture puts `lib/` at the
 | Session hijack (stolen JWT) | High | Low | HTTPS only; JWT short-lived (1h); refresh token rotation |
 | Optimistic UI shows success when server failed | Medium | Medium | **Rollback on error + toast** |
 | Dependency supply-chain attack | High | Low | `npm audit`, lockfile committed, minimal dependencies |
-| Demo data leaks into prod | Low | Medium | `DEMO_MODE` flag; seed only in demo mode |
 
 ### 10.2 Controls, explained for beginners
 
@@ -1177,7 +1131,6 @@ Supabase project (Frankfurt / Singapore / etc. — chosen at creation)
 |---|---|---|
 | `VITE_SUPABASE_URL` | `.env.local` (dev) · Vercel dashboard (prod) | Public (shipped in bundle) |
 | `VITE_SUPABASE_ANON_KEY` | Same | Public (shipped in bundle) |
-| `VITE_DEMO_MODE` | Same | Public (it's a boolean) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Nowhere in the frontend. Ever.** Only in server-side tools (Supabase dashboard, CLI). | Never shipped |
 
 **The `VITE_` prefix** is a Vite convention: only variables with this prefix are exposed to the browser bundle. This is a *safety mechanism*, not a *security guarantee* — it prevents accidental leakage of non-prefixed secrets, but it doesn't protect prefixed ones. The rule is: **only put public values behind `VITE_`.**
@@ -1185,7 +1138,7 @@ Supabase project (Frankfurt / Singapore / etc. — chosen at creation)
 ### 11.4 Database deployment
 
 - **Schema changes:** applied via the Supabase SQL editor (hackathon) or `supabase db push` (standard). The SQL lives in `supabase/*.sql` in git, so the schema is reproducible.
-- **Seed data:** `supabase/seed.sql` runs once for a fresh project; optional demo seed for judge-friendly first-run.
+- **Seed data:** `supabase/seed.sql` runs once for a fresh project.
 - **Backups:** Supabase free tier includes daily backups with limited retention. For a hackathon, this is sufficient. If you have important demo data, export it to a JSON file the night before.
 
 ### 11.5 Rollback and recovery
@@ -1194,8 +1147,7 @@ Supabase project (Frankfurt / Singapore / etc. — chosen at creation)
 |---|---|
 | Bad frontend deploy | Vercel dashboard → "Promote previous deployment" → instant rollback (no rebuild) |
 | Bad schema migration | Re-run the previous SQL (keep every migration in git) |
-| Auth provider outage | Flip `DEMO_MODE = true`, redeploy, continue demo from localStorage |
-| Supabase project outage | Nothing to do in 48h — but this is why the demo-mode fallback exists |
+| Auth provider outage | Wait for Supabase to recover; the app has no local fallback |
 | Lost demo data | Restore from `supabase/seed.sql` or the JSON export |
 
 ### 11.6 Monitoring (minimal, realistic)
@@ -1233,7 +1185,7 @@ This table is the "what changes between the standard architecture and the hackat
 | **Pagination** | Cursor-based pagination for large datasets | None — fetch everything | Single-user data < 10 MB |
 | **Monitoring** | Sentry + structured logs + uptime checks | `console.error` + Vercel/Supabase dashboards | 48h debugging happens in the console |
 | **Analytics** | PostHog / Mixpanel | None (or Vercel Analytics) | No product decisions to make in 48h |
-| **Offline / PWA** | Service worker + sync queue | None | Out of scope; the demo-mode fallback covers outages |
+| **Offline / PWA** | Service worker + sync queue | None | Out of scope; the app needs a network connection |
 | **Backups** | Automated + tested restore | Supabase daily (free tier) + `seed.sql` | Good enough for a demo |
 | **Rate limiting** | Per-user rate limits on write endpoints | Supabase default (generous, sufficient for single user) | No abuse vector in a personal app |
 | **Data export** | Scheduled exports + S3 | "Download JSON" button (if time) | Cheap insurance; not blocking |
@@ -1277,7 +1229,6 @@ Before the first commit, confirm these decisions (they mirror the TRD's §Append
 - [ ] **`lib/` functions are pure** — `today` is a parameter, not a global.
 - [ ] **RLS is enabled on all 3 tables** — verified by logging in as two users and testing reads.
 - [ ] **Service role key is nowhere in the frontend** — verified by `grep dist/`.
-- [ ] **`DEMO_MODE` flag is wired to the repository** — verified by flipping it and running the app.
 - [ ] **`planned_date` semantics are frozen** — decided in TRD §17 (R1); documented in code comments.
 - [ ] **Streak definition is agreed** — decided in TRD §17 (R2); documented in PRD §4.
 - [ ] **Shift graph uses Option B** (derived from completions) — decided in §4.6 of this document.
