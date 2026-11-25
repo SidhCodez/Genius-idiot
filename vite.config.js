@@ -12,11 +12,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-date': ['date-fns'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-three': ['three'],
+        // Vite v8 (Rolldown) requires manualChunks to be a function, not an object.
+        manualChunks(id) {
+          if (id.includes('@supabase/supabase-js')) return 'vendor-supabase';
+          if (id.includes('date-fns')) return 'vendor-date';
+          if (id.includes('framer-motion')) return 'vendor-motion';
+          if (id.includes('/three/')) return 'vendor-three';
         },
       },
     },
