@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import AppShell from './components/AppShell';
 import ToastViewport from './components/Toast';
 import AuthGuard from './routes/AuthGuard';
@@ -44,6 +45,7 @@ export default function App() {
       </Routes>
 
       <ToastViewport />
+      <Analytics />
     </Suspense>
   );
 }
