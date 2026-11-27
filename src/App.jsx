@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import AppShell from './components/AppShell';
 import FocusMusic from './components/FocusMusic';
+import HelpBot from './components/HelpBot';
 import ToastViewport from './components/Toast';
 import AuthGuard from './routes/AuthGuard';
 import { useApp } from './context/AppContext';
@@ -47,6 +48,7 @@ export default function App() {
       </Routes>
 
       <AppMusic />
+      <AppHelpBot />
       <ToastViewport />
       <Analytics />
     </Suspense>
@@ -68,4 +70,20 @@ function AppMusic() {
     return null;
   }
   return <FocusMusic />;
+}
+
+// Keep the local help guide within the signed-in app, including Setup.
+function AppHelpBot() {
+  const { authUser } = useApp();
+  const { pathname } = useLocation();
+  if (!authUser) return null;
+  if (
+    pathname === '/welcome' ||
+    pathname === '/login' ||
+    pathname === '/reset-password' ||
+    pathname.startsWith('/p/')
+  ) {
+    return null;
+  }
+  return <HelpBot />;
 }
