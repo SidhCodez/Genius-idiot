@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, LogOut, Moon, Pencil, Trash2 } from 'lucide-react';
+import { Download, LogOut, Moon, Pencil, Trash2, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatDay } from '../lib/dates';
+import { isSoundEnabled, playCue, primeAudio, setSoundEnabled, stopAllSounds } from '../lib/sounds';
 import { Button, Card, Input, Select } from '../components/ui';
 import Modal from '../components/Modal';
 
@@ -26,6 +27,24 @@ export default function Settings() {
   const [deleting, setDeleting] = useState(null);
   const [restGoal, setRestGoal] = useState(goals[0]?.id ?? '');
   const [restDate, setRestDate] = useState(today);
+  const [soundOn, setSoundOn] = useState(() => isSoundEnabled());
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundEnabled(next);
+    setSoundOn(next);
+    if (next) {
+      primeAudio();
+      playCue('start');
+    } else {
+      stopAllSounds();
+    }
+  };
+
+  const previewCue = (name) => {
+    primeAudio();
+    playCue(name);
+  };
 
   const goalName = (goalId) => goals.find((goal) => goal.id === goalId)?.name ?? 'Deleted goal';
 
@@ -144,6 +163,28 @@ export default function Settings() {
               ))}
           </ul>
         )}
+      </Card>
+
+      <Card>
+        <h2 className="font-display text-xl text-ink">Timer sounds</h2>
+        <p className="mt-1 text-sm text-slate">
+          Cues play when a focus session starts, pauses, finishes, and five minutes before it ends.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={toggleSound} aria-pressed={!soundOn}>
+            {soundOn ? <Volume2 className="w-4 h-4" aria-hidden="true" /> : <VolumeX className="w-4 h-4" aria-hidden="true" />}
+            {soundOn ? 'Sound on' : 'Sound off'}
+          </Button>
+          {soundOn && (
+            <>
+              <Button variant="secondary" onClick={() => previewCue('start')}>Start cue</Button>
+              <Button variant="secondary" onClick={() => previewCue('stop')}>Pause cue</Button>
+              <Button variant="secondary" onClick={() => previewCue('finish')}>Finish cue</Button>
+              <Button variant="secondary" onClick={() => previewCue('alarm')}>5-min alarm</Button>
+            </>
+          )}
+        </div>
       </Card>
 
       <Card>

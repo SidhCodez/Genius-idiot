@@ -2,9 +2,18 @@
 // when the clock reaches zero. State survives reloads via localStorage.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ExternalLink, Pause, Play, RotateCcw } from 'lucide-react';
+import { ExternalLink, Pause, Play, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { elapsedMs, formatClock, minutesFrom } from '../lib/timer';
 import { sessionMinutes } from '../lib/multiday';
+import {
+  isSoundEnabled,
+  playCue,
+  primeAudio,
+  setSoundEnabled,
+  stopAllSounds,
+} from '../lib/sounds';
+
+const ALARM_AT_MS = 5 * 60_000;
 
 const storageKey = (goalId) => `gi:timer:${goalId}`;
 
@@ -41,11 +50,14 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
   const finishedRef = useRef(false);
   const pauseButtonRef = useRef(null);
   const autoStartedRef = useRef(false);
+  const alarmPlayedRef = useRef(false);
+  const [soundOn, setSoundOn] = useState(() => isSoundEnabled());
 
   // A different task means a different session.
   useEffect(() => {
     setState(load(goal.id, task.id));
     finishedRef.current = false;
+    alarmPlayedRef.current = false;
   }, [goal.id, task.id]);
 
   useEffect(() => {
@@ -74,6 +86,17 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
   const elapsed = state ? elapsedMs(state, now) : 0;
   const remaining = Math.max(0, targetMs - elapsed);
   const pct = targetMs ? Math.min(elapsed / targetMs, 1) : 0;
+  const inFinalStretch = sessionMins > 5 && remaining > 0 && remaining <= ALARM_AT_MS;
+
+  // Five-minute warning, once per session. Sessions of five minutes or less
+  // skip it because they would alarm the moment they start.
+  useEffect(() => {
+    if (!state?.running || finishedRef.current) return;
+    if (sessionMins <= 5 || remaining > ALARM_AT_MS || remaining <= 0) return;
+    if (alarmPlayedRef.current) return;
+    alarmPlayedRef.current = true;
+    playCue('alarm');
+  }, [state?.running, remaining, sessionMins]);
 
   // shortcut: wall-clock elapsed, so time away from the tab counts toward the
   // goal. Upgrade to pause-on-unload if that ever matters.
@@ -82,11 +105,25 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
     finishedRef.current = true;
     drop(goal.id);
     setState(null);
+    playCue('finish');
     onFinish(sessionMins);
   }, [elapsed, targetMs, state, goal.id, sessionMins, onFinish]);
 
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundEnabled(next);
+    setSoundOn(next);
+    if (next) {
+      primeAudio();
+      playCue('start');
+    }
+  };
+
   const begin = (carryMs = 0) => {
     finishedRef.current = false;
+    alarmPlayedRef.current = false;
+    primeAudio();
+    playCue('start');
     const next = {
       taskId: task.id,
       elapsedMs: carryMs,
@@ -99,15 +136,28 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
   };
 
   const pause = () => {
+    playCue('stop');
     const next = { ...state, elapsedMs: elapsed, running: false, updatedAt: Date.now() };
     save(goal.id, next);
     setState(next);
   };
 
   const reset = () => {
+    stopAllSounds();
+    playCue('stop');
     drop(goal.id);
     finishedRef.current = false;
+    alarmPlayedRef.current = false;
     setState(null);
+  };
+
+  const finishEarly = () => {
+    stopAllSounds();
+    playCue('finish');
+    const minutes = minutesFrom(elapsed);
+    drop(goal.id);
+    setState(null);
+    onFinish(minutes);
   };
 
   useEffect(() => {
@@ -176,9 +226,24 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
                 </span>
               )}
             </p>
+            {inFinalStretch && (
+              <p className="mt-5 inline-flex items-center rounded-full border border-champagne/40 bg-champagne/10 px-4 py-1.5 text-sm text-champagne-light">
+                Final stretch · 5 minutes left
+              </p>
+            )}
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={toggleSound}
+              aria-label={soundOn ? 'Mute timer sounds' : 'Enable timer sounds'}
+              aria-pressed={!soundOn}
+              className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-linen/20 px-5 py-3 text-sm font-medium text-linen transition hover:bg-linen/10"
+            >
+              {soundOn ? <Volume2 className="h-4 w-4" aria-hidden="true" /> : <VolumeX className="h-4 w-4" aria-hidden="true" />}
+              {soundOn ? 'Sound on' : 'Sound off'}
+            </button>
             <button
               type="button"
               onClick={pause}
@@ -199,12 +264,7 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
             {elapsed > 0 && (
               <button
                 type="button"
-                onClick={() => {
-                  const minutes = minutesFrom(elapsed);
-                  drop(goal.id);
-                  setState(null);
-                  onFinish(minutes);
-                }}
+                onClick={finishEarly}
                 className="inline-flex min-h-12 items-center px-4 py-3 text-sm text-linen/60 underline underline-offset-4 transition hover:text-linen"
               >
                 Finish early
@@ -269,15 +329,22 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
           Reset
         </button>
 
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-label={soundOn ? 'Mute timer sounds' : 'Enable timer sounds'}
+          aria-pressed={!soundOn}
+          className="inline-flex items-center gap-1.5 px-1 py-2 text-xs text-slate hover:text-ink"
+          title={soundOn ? 'Timer sounds on' : 'Timer sounds off'}
+        >
+          {soundOn ? <Volume2 className="w-3.5 h-3.5" aria-hidden="true" /> : <VolumeX className="w-3.5 h-3.5" aria-hidden="true" />}
+          {soundOn ? 'Sound' : 'Muted'}
+        </button>
+
         {elapsed > 0 && (
           <button
             type="button"
-            onClick={() => {
-              const minutes = minutesFrom(elapsed);
-              drop(goal.id);
-              setState(null);
-              onFinish(minutes);
-            }}
+            onClick={finishEarly}
             className="ml-auto py-2 text-xs text-slate hover:text-ink underline underline-offset-4"
           >
             Finish early
