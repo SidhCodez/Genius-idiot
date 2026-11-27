@@ -210,6 +210,13 @@ export default function AppShell() {
     setDrawerOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('gi:overlay-state', { detail: { active: drawerOpen } }));
+    return () => {
+      window.dispatchEvent(new CustomEvent('gi:overlay-state', { detail: { active: false } }));
+    };
+  }, [drawerOpen]);
+
   // Crossing into the desktop layout also closes it, so scroll is not left locked.
   useEffect(() => {
     const desktop = window.matchMedia('(min-width: 1024px)');

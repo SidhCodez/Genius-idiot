@@ -192,13 +192,14 @@ export default function FocusMusic() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(() => window.innerWidth >= 640);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [playerError, setPlayerError] = useState('');
   const [position, setPosition] = useState(initialPosition);
   const [detached, setDetached] = useState(initiallyDetached);
+  const [overlayOpen, setOverlayOpen] = useState(false);
   const mountRef = useRef(null);
   const panelRef = useRef(null);
   const dragRef = useRef(null);
@@ -219,7 +220,6 @@ export default function FocusMusic() {
 
   const startDrag = (event) => {
     if (event.button !== 0) return;
-    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     const rect = panelRef.current?.getBoundingClientRect();
     const origin = detached ? position : { x: rect?.left ?? position.x, y: rect?.top ?? position.y };
@@ -271,7 +271,13 @@ export default function FocusMusic() {
       const target = document.getElementById('focus-music-slot');
       if (target && !detached) {
         const rect = target.getBoundingClientRect();
-        setPosition({ x: rect.left, y: rect.top });
+        const panel = panelRef.current?.getBoundingClientRect();
+        const width = panel?.width ?? 224;
+        const height = panel?.height ?? 44;
+        setPosition({
+          x: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+          y: Math.max(8, Math.min(rect.top, window.innerHeight - height - 8)),
+        });
       }
     };
     updateTarget();
@@ -284,7 +290,13 @@ export default function FocusMusic() {
       window.removeEventListener('resize', updateTarget);
       window.removeEventListener('scroll', updateTarget, true);
     };
-  }, [detached]);
+  }, [detached, expanded, pickerOpen, track]);
+
+  useEffect(() => {
+    const onOverlayState = (event) => setOverlayOpen(Boolean(event.detail?.active));
+    window.addEventListener('gi:overlay-state', onOverlayState);
+    return () => window.removeEventListener('gi:overlay-state', onOverlayState);
+  }, []);
 
   // Focus mode covers the screen; shrink to the pill so music stays reachable
   // without covering the timer, then restore the previous size on exit.
@@ -388,7 +400,7 @@ export default function FocusMusic() {
     setError('');
     setInput('');
     setPickerOpen(false);
-    setExpanded(true);
+    setExpanded(window.innerWidth >= 640);
     setTrack(parsed);
     saveTrack(parsed);
     if (parsed.videoId === track?.videoId) playerRef.current?.playVideo();
@@ -398,7 +410,7 @@ export default function FocusMusic() {
     const selected = musicLibraryTrack(entry);
     setError('');
     setPickerOpen(false);
-    setExpanded(true);
+    setExpanded(window.innerWidth >= 640);
     if (selected.videoId === track?.videoId) {
       playerRef.current?.playVideo();
       return;
@@ -451,7 +463,7 @@ export default function FocusMusic() {
     pickerOpen ? (
       <section
         aria-label="Focus music"
-        className="w-[17.5rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-sand bg-parchment/95 p-3 shadow-card backdrop-blur"
+        className="max-h-[calc(100dvh-1rem)] w-[17.5rem] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-2xl border border-sand bg-parchment/95 p-3 shadow-card backdrop-blur"
       >
         <div className="flex items-start justify-between gap-2">
           <p className="flex items-center gap-2 font-display text-lg leading-none text-ink">
@@ -500,7 +512,7 @@ export default function FocusMusic() {
       aria-label="Focus music player"
       className={
         expanded
-          ? 'w-[17.5rem] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-sand bg-parchment/95 p-2.5 shadow-card backdrop-blur'
+          ? 'max-h-[calc(100dvh-1rem)] w-[17.5rem] max-w-[calc(100vw-1rem)] overflow-y-auto overscroll-contain rounded-2xl border border-sand bg-parchment/95 p-2.5 shadow-card backdrop-blur'
           : 'inline-flex items-center gap-0.5 rounded-full border border-sand bg-parchment/95 p-1 shadow-card backdrop-blur'
       }
     >
@@ -545,21 +557,32 @@ export default function FocusMusic() {
 
       {!expanded ? (
         <>
-          <span onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} className="grid h-8 w-8 shrink-0 cursor-grab touch-none place-items-center rounded-full bg-obsidian text-linen active:cursor-grabbing">
+          <button
+            type="button"
+            onPointerDown={startDrag}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onClick={() => {
+              if (didDragRef.current) { didDragRef.current = false; return; }
+              setExpanded(true);
+            }}
+            aria-label="Open focus music controls or drag to move"
+            className="grid h-8 w-8 shrink-0 cursor-grab touch-none place-items-center rounded-full bg-obsidian text-linen active:cursor-grabbing"
+          >
             <Music2 className="h-3.5 w-3.5" aria-hidden="true" />
-          </span>
+          </button>
           <button
             type="button"
             onClick={togglePlay}
             aria-label={playing ? 'Pause focus music' : 'Play focus music'}
-            className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-ivory"
+            className="hidden h-9 w-9 place-items-center rounded-full text-ink hover:bg-ivory sm:grid"
           >
             {playing ? <Pause className="h-4 w-4" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
           </button>
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="min-h-9 rounded-full px-2 text-xs font-medium text-slate hover:text-ink"
+            className="hidden min-h-9 rounded-full px-2 text-xs font-medium text-slate hover:text-ink sm:inline-flex"
           >
             Focus music
           </button>
@@ -567,7 +590,7 @@ export default function FocusMusic() {
             type="button"
             onClick={removeTrack}
             aria-label="Stop and remove focus music"
-            className="grid h-9 w-9 place-items-center rounded-full text-slate hover:bg-ivory hover:text-bordeaux"
+            className="hidden h-9 w-9 place-items-center rounded-full text-slate hover:bg-ivory hover:text-bordeaux sm:grid"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -640,7 +663,8 @@ export default function FocusMusic() {
   return createPortal(
     <div
       ref={panelRef}
-      className="fixed z-[65] pb-[env(safe-area-inset-bottom)] print:hidden"
+      aria-hidden={overlayOpen}
+      className={`fixed z-[65] pb-[env(safe-area-inset-bottom)] print:hidden ${overlayOpen ? 'pointer-events-none invisible' : ''}`}
       style={{ left: position.x, top: position.y }}
     >
       {panel}
