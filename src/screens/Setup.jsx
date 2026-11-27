@@ -78,6 +78,7 @@ export default function Setup() {
             <span>GENIUS IDIOT</span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
+            <div id="focus-music-slot" className="h-11 w-10 shrink-0 sm:w-[124px]" />
             <ThemeToggle />
             <button
               type="button"

@@ -1,9 +1,11 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import AppShell from './components/AppShell';
+import FocusMusic from './components/FocusMusic';
 import ToastViewport from './components/Toast';
 import AuthGuard from './routes/AuthGuard';
+import { useApp } from './context/AppContext';
 import { BootLoader } from './components/ui';
 
 const Landing = lazy(() => import('./screens/Landing'));
@@ -44,8 +46,26 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
+      <AppMusic />
       <ToastViewport />
       <Analytics />
     </Suspense>
   );
+}
+
+// The focus-music player follows signed-in users across routes, including the
+// setup flow, but stays out of public marketing and auth pages.
+function AppMusic() {
+  const { authUser } = useApp();
+  const { pathname } = useLocation();
+  if (!authUser) return null;
+  if (
+    pathname === '/welcome' ||
+    pathname === '/login' ||
+    pathname === '/reset-password' ||
+    pathname.startsWith('/p/')
+  ) {
+    return null;
+  }
+  return <FocusMusic />;
 }

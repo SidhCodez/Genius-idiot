@@ -76,10 +76,13 @@ export default function GoalTimer({ goal, task, onFinish, autoStart = false }) {
     appRoot.inert = true;
     document.body.style.overflow = 'hidden';
     pauseButtonRef.current?.focus();
+    // Let the floating music player shrink so it never covers focus controls.
+    window.dispatchEvent(new CustomEvent('gi:focus-mode', { detail: { active: true } }));
 
     return () => {
       appRoot.inert = wasInert;
       document.body.style.overflow = previousOverflow;
+      window.dispatchEvent(new CustomEvent('gi:focus-mode', { detail: { active: false } }));
     };
   }, [state?.running]);
 

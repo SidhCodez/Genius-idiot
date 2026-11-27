@@ -282,6 +282,8 @@ export default function AppShell() {
               <span className="hidden sm:inline">Templates</span>
             </Link>
 
+            <div id="focus-music-slot" className="h-11 w-10 shrink-0 sm:w-[124px]" />
+
             <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
               <ThemeToggle />
               <Link
