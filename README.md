@@ -87,7 +87,6 @@ slots as their remaining estimate requires. Rest days pause the queue.
 | **Guided tours** | One-time setup and dashboard walkthroughs introduce goal creation, templates, the Today queue, timer and sidebar. You can skip a tour. |
 | **Timer sounds** | Synthesized start, pause, finish and five-minute warning cues. The warning plays once per session longer than five minutes. Toggle sounds in the timer or Settings; the preference is saved in this browser. |
 | **Focus music** | A player beside the top navigation offers ten curated YouTube tracks or a pasted YouTube link. It appears on signed-in app routes; play, mute, minimize, change or remove the track. |
-| **Zenphorus help bot** | A floating guide on signed-in app routes answers common questions with fixed, local keyword matching. It uses no AI service or chat API, does not access or change account data, and only explains verified app features. |
 | **Feedback & issues** | Report bugs or request features through public GitHub issues, or fill in the embedded Tally feedback form. |
 
 ---
@@ -157,7 +156,6 @@ Create or edit `.env` in the project root:
 ```bash
 VITE_SUPABASE_URL=https://<project-ref>.supabase.co
 VITE_SUPABASE_ANON_KEY=<publishable / anon key>
-VITE_TURNSTILE_SITE_KEY=<optional Cloudflare Turnstile site key>
 ```
 
 - Use the **publishable / anon** key. **Never** put the `service_role` key in a frontend env var.
@@ -188,23 +186,6 @@ Password reset emails use the same settings: the link returns the user to
 
 To test confirmation emails on the built-in SMTP, use a project-team email address or configure a
 custom SMTP. With Confirm email off, the app also accepts the session straight after signup.
-
-### 3.4 Login CAPTCHA (optional)
-
-Signup, login, password reset, and resend can be protected with Cloudflare Turnstile. The widget
-stays hidden until a site key is configured, so the app keeps working without it.
-
-1. Create a Turnstile widget in the Cloudflare dashboard for `genius-idiot.vercel.app` (and
-   `localhost` for development). Copy the **site key**.
-2. Set `VITE_TURNSTILE_SITE_KEY` in `.env.production` or the Vercel environment variables, then
-   rebuild.
-3. In Supabase → Authentication → Attack Protection, enable bot protection, choose **Turnstile**,
-   and paste the **secret key**.
-
-Both halves are required. A site key without the Supabase secret shows the widget but does not
-protect auth; the Supabase secret without a site key makes login fail because no token is sent.
-
----
 
 ## 4. Your first five minutes
 
@@ -552,7 +533,6 @@ src/
     hibernation.js     bounded rest-day rows for pausing every queue
     multiday.js        multi-day estimates, session caps and progress patches
     musicLibrary.js    ten curated focus-music tracks
-    helpBot.js         fixed keyword-matched answers about verified app features
     timer.js           timer maths (pure)
     soundCues.js       synthesized timer cue definitions
     sounds.js          Web Audio timer cues and saved mute preference
@@ -568,7 +548,6 @@ src/
   components/          presentational + domain components
     motion/            Framer Motion primitives (Card3D, ScrollReveal, …)
     FocusMusic.jsx     global YouTube player and curated-library picker
-    HelpBot.jsx        signed-in floating local help chat (Zenphorus)
     FeedbackIssues.jsx GitHub issue links and embedded Tally feedback form
     LongFormTaskForm.jsx, HibernationControl.jsx, GoalTimer.jsx, …
     OnboardingTour.jsx one-time setup and dashboard walkthroughs
@@ -633,8 +612,7 @@ each sees zero of the other's goals (RLS), and rehearse the missed-day shift onc
 
 ## 13. What this app deliberately does not do
 
-No generative AI or AI APIs; Zenphorus is a deterministic local guide with fixed keyword-matched
-answers. Also no PDF import, no email notifications, no social login, no Google Calendar, no payments, no
+No AI, no PDF import, no email notifications, no social login, no Google Calendar, no payments, no
 collaboration, no tags or tag filters, no date-range filters, no pagination, no websockets, no custom
 backend, no `projected_date` column, no stored streaks.
 

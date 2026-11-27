@@ -48,14 +48,11 @@ const authFail = (error, status) => {
 
 const unconfirmed = (user) => !user?.email_confirmed_at;
 
-export async function signUp(email, password, captchaToken) {
+export async function signUp(email, password) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      emailRedirectTo: window.location.origin,
-      ...(captchaToken ? { captchaToken } : {}),
-    },
+    options: { emailRedirectTo: window.location.origin },
   });
   if (error) return authFail(error, error.status ?? 400);
   // No session means Supabase wants the email confirmed first.
@@ -65,11 +62,10 @@ export async function signUp(email, password, captchaToken) {
   return { ok: true, data: data.user };
 }
 
-export async function logIn(email, password, captchaToken) {
+export async function logIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
-    ...(captchaToken ? { options: { captchaToken } } : {}),
   });
   if (error) return authFail(error, error.status ?? 401);
   // Defence in depth: never keep a session for an unverified address, even if
@@ -88,24 +84,20 @@ export async function logIn(email, password, captchaToken) {
   return { ok: true, data: data.user };
 }
 
-export async function resendConfirmation(email, captchaToken) {
+export async function resendConfirmation(email) {
   const { error } = await supabase.auth.resend({
     type: 'signup',
     email,
-    options: {
-      emailRedirectTo: window.location.origin,
-      ...(captchaToken ? { captchaToken } : {}),
-    },
+    options: { emailRedirectTo: window.location.origin },
   });
   if (error) return authFail(error, error.status ?? 400);
   return { ok: true, data: null };
 }
 
 // Recovery: the email lands on /reset-password with a short-lived session.
-export async function requestPasswordReset(email, captchaToken) {
+export async function requestPasswordReset(email) {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
-    ...(captchaToken ? { captchaToken } : {}),
   });
   if (error) return authFail(error, error.status ?? 400);
   return { ok: true, data: null };
