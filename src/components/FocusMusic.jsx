@@ -19,25 +19,6 @@ import { MUSIC_LIBRARY, musicLibraryTrack } from '../lib/musicLibrary';
 import { loadYouTubeApi } from '../lib/youtubeApi';
 
 const STORAGE_KEY = 'gi:focus-music';
-const POSITION_KEY = 'gi:focus-music-position';
-
-function initialPosition() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(POSITION_KEY));
-    if (Number.isFinite(saved?.x) && Number.isFinite(saved?.y)) return saved;
-  } catch {
-    /* use the default corner */
-  }
-  return { x: 12, y: 12 };
-}
-
-function initiallyDetached() {
-  try {
-    return JSON.parse(localStorage.getItem(POSITION_KEY))?.detached === true;
-  } catch {
-    return false;
-  }
-}
 
 function readSavedTrack() {
   try {
@@ -197,87 +178,33 @@ export default function FocusMusic() {
   const [muted, setMuted] = useState(false);
   const [ready, setReady] = useState(false);
   const [playerError, setPlayerError] = useState('');
-  const [position, setPosition] = useState(initialPosition);
-  const [detached, setDetached] = useState(initiallyDetached);
+  const [position, setPosition] = useState({ x: 12, y: 12 });
+  const [anchorReady, setAnchorReady] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   const mountRef = useRef(null);
   const panelRef = useRef(null);
-  const dragRef = useRef(null);
-  const didDragRef = useRef(false);
   const playerRef = useRef(null);
   const autoplayRef = useRef(false);
   const wasExpandedRef = useRef(true);
 
-  const clampPosition = (next) => {
-    const bounds = panelRef.current?.getBoundingClientRect();
-    const width = bounds?.width ?? 224;
-    const height = bounds?.height ?? 44;
-    return {
-      x: Math.max(8, Math.min(next.x, window.innerWidth - width - 8)),
-      y: Math.max(8, Math.min(next.y, window.innerHeight - height - 8)),
-    };
-  };
-
-  const startDrag = (event) => {
-    if (event.button !== 0) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const rect = panelRef.current?.getBoundingClientRect();
-    const origin = detached ? position : { x: rect?.left ?? position.x, y: rect?.top ?? position.y };
-    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, origin, latest: origin };
-  };
-
-  const moveDrag = (event) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    if (Math.abs(dx) + Math.abs(dy) > 4) didDragRef.current = true;
-    if (didDragRef.current) {
-      drag.latest = clampPosition({ x: drag.origin.x + dx, y: drag.origin.y + dy });
-      setDetached(true);
-      setPosition(drag.latest);
-    }
-  };
-
-  const endDrag = (event) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return;
-    const finalPosition = dragRef.current.latest;
-    dragRef.current = null;
-    try {
-      localStorage.setItem(POSITION_KEY, JSON.stringify({ ...finalPosition, detached: didDragRef.current }));
-    } catch {
-      /* position remains set for this session */
-    }
-    window.setTimeout(() => { didDragRef.current = false; }, 0);
-  };
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      if (detached) setPosition((current) => clampPosition(current));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [expanded, pickerOpen, track, detached]);
-
-  useEffect(() => {
-    const onResize = () => {
-      if (detached) setPosition((current) => clampPosition(current));
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [detached]);
-
   useEffect(() => {
     const updateTarget = () => {
       const target = document.getElementById('focus-music-slot');
-      if (target && !detached) {
+      if (target) {
         const rect = target.getBoundingClientRect();
         const panel = panelRef.current?.getBoundingClientRect();
         const width = panel?.width ?? 224;
         const height = panel?.height ?? 44;
-        setPosition({
+        const next = {
           x: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
           y: Math.max(8, Math.min(rect.top, window.innerHeight - height - 8)),
-        });
+        };
+        setAnchorReady(true);
+        setPosition((current) => (
+          current.x === next.x && current.y === next.y ? current : next
+        ));
+      } else {
+        setAnchorReady(false);
       }
     };
     updateTarget();
@@ -290,7 +217,7 @@ export default function FocusMusic() {
       window.removeEventListener('resize', updateTarget);
       window.removeEventListener('scroll', updateTarget, true);
     };
-  }, [detached, expanded, pickerOpen, track]);
+  }, [expanded, pickerOpen, track]);
 
   useEffect(() => {
     const onOverlayState = (event) => setOverlayOpen(Boolean(event.detail?.active));
@@ -467,7 +394,7 @@ export default function FocusMusic() {
       >
         <div className="flex items-start justify-between gap-2">
           <p className="flex items-center gap-2 font-display text-lg leading-none text-ink">
-            <span onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} className="cursor-grab touch-none active:cursor-grabbing">
+            <span>
               <Music2 className="h-4 w-4 text-champagne" aria-hidden="true" />
             </span>
             Focus music
@@ -495,13 +422,10 @@ export default function FocusMusic() {
     ) : (
       <button
         type="button"
-        onClick={() => {
-          if (didDragRef.current) { didDragRef.current = false; return; }
-          setPickerOpen(true);
-        }}
+        onClick={() => setPickerOpen(true)}
         className="inline-flex min-h-10 items-center gap-2 rounded-full border border-sand bg-parchment/95 px-3.5 py-2 text-xs font-medium text-slate shadow-card backdrop-blur transition hover:border-ink hover:text-ink"
       >
-        <span onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} className="cursor-grab touch-none active:cursor-grabbing">
+        <span>
           <Music2 className="h-4 w-4 text-champagne" aria-hidden="true" />
         </span>
         <span className="hidden sm:inline">Focus music</span>
@@ -518,7 +442,7 @@ export default function FocusMusic() {
     >
       {expanded && (
         <div className="flex items-center gap-2 px-0.5 pb-2">
-          <span onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag} className="cursor-grab touch-none active:cursor-grabbing">
+          <span>
             <Youtube className="h-4 w-4 text-terracotta" aria-hidden="true" />
           </span>
           <p className="text-sm font-medium text-ink">Focus music</p>
@@ -559,15 +483,9 @@ export default function FocusMusic() {
         <>
           <button
             type="button"
-            onPointerDown={startDrag}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onClick={() => {
-              if (didDragRef.current) { didDragRef.current = false; return; }
-              setExpanded(true);
-            }}
-            aria-label="Open focus music controls or drag to move"
-            className="grid h-8 w-8 shrink-0 cursor-grab touch-none place-items-center rounded-full bg-obsidian text-linen active:cursor-grabbing"
+            onClick={() => setExpanded(true)}
+            aria-label="Open focus music controls"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-obsidian text-linen"
           >
             <Music2 className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -664,7 +582,7 @@ export default function FocusMusic() {
     <div
       ref={panelRef}
       aria-hidden={overlayOpen}
-      className={`fixed z-[65] pb-[env(safe-area-inset-bottom)] print:hidden ${overlayOpen ? 'pointer-events-none invisible' : ''}`}
+      className={`fixed z-[31] pb-[env(safe-area-inset-bottom)] print:hidden ${overlayOpen || !anchorReady ? 'pointer-events-none invisible' : ''}`}
       style={{ left: position.x, top: position.y }}
     >
       {panel}
