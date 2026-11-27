@@ -18,7 +18,7 @@ import {
 import { useApp } from '../context/AppContext';
 import ThemeToggle from '../components/ThemeToggle';
 import BrandLogo from '../components/BrandLogo';
-import ProfileCard from '../components/ProfileCard';
+import { WordmarkFooter } from '../components/ui/wordmark-footer';
 import Card3D from '../components/motion/Card3D';
 import ScrollReveal from '../components/motion/ScrollReveal';
 import SpotlightCard from '../components/motion/SpotlightCard';
@@ -693,70 +693,79 @@ export default function Landing() {
         </ScrollReveal>
       </section>
       <section id="developer" className="landing-section developer-section py-20 sm:py-28">
-        <div className="developer-layout">
-          <motion.div
-            className="developer-portrait"
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
-            whileInView={{ opacity: 1, scale: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <div className="developer-orbit" aria-hidden="true" />
-            <ProfileCard
-              avatarUrl="/siddiq-cutout.webp"
-              name="Siddiq"
-              title="Software Engineer"
-              handle="sidhdev"
-              status="Online"
-              contactText="Email"
-              theme="light"
-              backdropColor="#f4f1ea"
-              onContactClick={() => { window.location.href = 'mailto:siddiq080806@gmail.com'; }}
-            />
-          </motion.div>
-          <motion.div
-            className="developer-copy"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.25 }}
-            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.11, delayChildren: 0.08 } } }}
-          >
-            <motion.p className="developer-kicker" variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>A note from the builder</motion.p>
-            <motion.h2 className="font-display" variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}>Meet the developer</motion.h2>
+        <motion.div
+          className="developer-layout"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.11, delayChildren: 0.08 } } }}
+        >
+          <motion.p className="developer-kicker" variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}>
+            A note from the builder
+          </motion.p>
+          <motion.h2 className="font-display" variants={{ hidden: { opacity: 0, y: 18 }, visible: { opacity: 1, y: 0 } }}>
+            Meet the developer
+          </motion.h2>
+          <div className="developer-body">
             <motion.p className="developer-bio" variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}>
               I’m Siddiq. I built Genius Idiot to make showing up for your goals feel lighter: one honest task at a time, without a backlog waiting to punish you.
             </motion.p>
-            <motion.div className="developer-links" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
-              <a href="https://www.linkedin.com/in/siddiq-dev/" target="_blank" rel="noreferrer"><Linkedin aria-hidden="true" />LinkedIn</a>
-              <a href="https://github.com/SidhCodez" target="_blank" rel="noreferrer"><Github aria-hidden="true" />GitHub</a>
-              <a href="mailto:siddiq080806@gmail.com"><Mail aria-hidden="true" />Email</a>
-              <a href="https://discord.com/users/sidhdev" target="_blank" rel="noreferrer"><MessageCircle aria-hidden="true" />Discord <span className="developer-handle">sidhdev</span></a>
-            </motion.div>
+            <motion.p className="developer-bio developer-bio--muted" variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}>
+              The app is designed, built and maintained by one person. It keeps your goals, tasks and rest days in Supabase, asks only for an email to sign in, and has no feed, no ads and no AI reading your notes. If something feels off, or a roadmap would help, write to me directly.
+            </motion.p>
+          </div>
+          <motion.div className="developer-links" variants={{ hidden: { opacity: 0, y: 14 }, visible: { opacity: 1, y: 0 } }}>
+            <a href="mailto:siddiq080806@gmail.com"><Mail aria-hidden="true" />Email</a>
+            <a href="https://www.linkedin.com/in/siddiq-dev/" target="_blank" rel="noreferrer"><Linkedin aria-hidden="true" />LinkedIn</a>
+            <a href="https://github.com/SidhCodez" target="_blank" rel="noreferrer"><Github aria-hidden="true" />GitHub</a>
+            <a href="https://discord.com/users/sidhdev" target="_blank" rel="noreferrer"><MessageCircle aria-hidden="true" />Discord <span className="developer-handle">sidhdev</span></a>
           </motion.div>
-        </div>
+          <motion.p className="developer-meta" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
+            Solo-built · React + Supabase · No telemetry
+          </motion.p>
+        </motion.div>
       </section>
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-sand bg-transparent py-10 sm:py-12">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8 text-xs text-slate">
-          <div className="flex items-center gap-3">
-            <span className="grid h-7 w-7 place-items-center overflow-hidden rounded-lg bg-white">
-              <BrandLogo className="h-full w-full" />
-            </span>
-            <span className="font-display text-base text-ink">Genius Idiot</span>
-            <span className="hidden sm:inline">· Private, distraction-free study tracking</span>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            <a href="#simulator" className="hover:text-ink transition">Simulator</a>
-            <a href="#curriculum" className="hover:text-ink transition">Roadmaps</a>
-            <a href="#faq" className="hover:text-ink transition">FAQ</a>
-            <a href="#workflow" className="hover:text-ink transition">How it works</a>
-            <Link to="/login?mode=login" className="hover:text-ink transition">Log in</Link>
-          </div>
-        </div>
-      </footer>
+      <WordmarkFooter
+        className="relative z-10"
+        name="Genius Idiot"
+        year={new Date().getFullYear()}
+        description="A study tracker that shows one honest task a day. Your plan stays in your own account, with no backlog to clear and no feed to scroll."
+        email="siddiq080806@gmail.com"
+        status="Private by default"
+        columns={[
+          {
+            title: 'Product',
+            links: [
+              { label: 'Daily simulator', href: '#simulator' },
+              { label: 'Roadmaps', href: '#curriculum' },
+              { label: 'Why it works', href: '#comparison' },
+              { label: 'FAQ', href: '#faq' },
+            ],
+          },
+          {
+            title: 'The app',
+            links: [
+              { label: 'How it works', href: '/how-it-works' },
+              { label: 'Create free account', href: '/login?mode=signup' },
+              { label: 'Log in', href: '/login?mode=login' },
+              { label: 'Inside the app', href: '#workflow' },
+            ],
+          },
+          {
+            title: 'Builder',
+            links: [
+              { label: 'Email Siddiq', href: 'mailto:siddiq080806@gmail.com' },
+              { label: 'LinkedIn', href: 'https://www.linkedin.com/in/siddiq-dev/' },
+              { label: 'GitHub', href: 'https://github.com/SidhCodez' },
+              { label: 'Discord · sidhdev', href: 'https://discord.com/users/sidhdev' },
+            ],
+          },
+        ]}
+        credit={{ label: 'Built solo by Siddiq', href: 'https://www.linkedin.com/in/siddiq-dev/' }}
+      />
       </div>
     </div>
   );

@@ -290,68 +290,12 @@
   }
 
   .developer-layout {
-    display: grid;
-    grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
-    align-items: center;
-    gap: clamp(2rem, 8vw, 7rem);
-    max-width: 64rem;
+    max-width: 56rem;
     margin-inline: auto;
+    padding-top: clamp(1.75rem, 4vw, 2.75rem);
+    border-top: 1px solid rgb(var(--sand));
   }
 
-  .developer-portrait {
-    position: relative;
-    width: min(100%, 340px);
-    aspect-ratio: 0.9;
-    margin-inline: auto;
-  }
-
-  .developer-portrait::before {
-    position: absolute;
-    inset: 7% 4% 4% 11%;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    content: '';
-    transform: rotate(-6deg);
-  }
-
-  .developer-portrait img {
-    position: absolute;
-    inset: 0 10% 10% 0;
-    width: 90%;
-    height: 90%;
-    object-fit: cover;
-    border-radius: 14px;
-    filter: grayscale(1);
-    transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1), filter 450ms ease;
-  }
-
-  .developer-portrait:hover img {
-    transform: scale(1.025);
-    filter: grayscale(0) saturate(1);
-  }
-
-  .developer-orbit {
-    position: absolute;
-    right: -2%;
-    top: 8%;
-    width: 42px;
-    aspect-ratio: 1;
-    border: 1px solid rgb(var(--champagne) / 0.7);
-    border-radius: 50%;
-    animation: developer-orbit 8s linear infinite;
-  }
-
-  .developer-orbit::after {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgb(var(--champagne));
-    content: '';
-  }
-
-  .developer-coordinate,
   .developer-kicker {
     color: rgb(var(--champagne));
     font-family: 'Space Mono', monospace;
@@ -360,25 +304,30 @@
     text-transform: uppercase;
   }
 
-  .developer-coordinate {
-    position: absolute;
-    right: 0;
-    bottom: 1%;
+  .developer-layout h2 {
+    margin-top: 0.85rem;
+    font-size: clamp(2.7rem, 7vw, 5.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
   }
 
-  .developer-copy h2 {
-    margin-top: 0.8rem;
-    font-size: clamp(2.7rem, 6vw, 5rem);
-    line-height: 0.98;
-    letter-spacing: -0.025em;
+  .developer-body {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 46rem;
+    margin-top: 1.6rem;
   }
 
   .developer-bio {
-    max-width: 38rem;
-    margin-top: 1.5rem;
     color: rgb(var(--slate));
     font-size: clamp(1rem, 1.5vw, 1.2rem);
     line-height: 1.75;
+  }
+
+  .developer-bio--muted {
+    color: rgb(var(--mist));
+    font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+    line-height: 1.8;
   }
 
   .developer-links {
@@ -393,8 +342,10 @@
     min-height: 44px;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.65rem 0.85rem;
-    border: 1px solid rgb(255 255 255 / 0.2);
+    padding: 0.65rem 0.9rem;
+    border: 1px solid rgb(var(--sand));
+    border-radius: 0.75rem;
+    background: rgb(var(--parchment));
     color: rgb(var(--ink));
     font-size: 0.875rem;
     transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
@@ -402,8 +353,8 @@
 
   .developer-links a:hover {
     transform: translateY(-2px);
-    border-color: rgb(var(--champagne) / 0.7);
-    background: rgb(255 255 255 / 0.06);
+    border-color: rgb(var(--champagne) / 0.55);
+    background: rgb(var(--ivory));
   }
 
   .developer-links svg {
@@ -415,24 +366,17 @@
     color: rgb(var(--mist));
   }
 
-  @keyframes developer-orbit {
-    to { transform: rotate(360deg); }
-  }
-
-  @media (max-width: 700px) {
-    .developer-layout {
-      grid-template-columns: 1fr;
-      gap: 2.5rem;
-    }
-
-    .developer-portrait {
-      width: min(74vw, 300px);
-    }
+  .developer-meta {
+    margin-top: 2rem;
+    color: rgb(var(--mist));
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .developer-orbit { animation: none; }
-    .developer-portrait img, .developer-links a, .landing-sections .shadow-card, .landing-sections .surface-card { transition: none; }
+    .developer-links a, .landing-sections .shadow-card, .landing-sections .surface-card { transition: none; }
   }
 }
 

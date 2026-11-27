@@ -1,5 +1,5 @@
 export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -35,5 +35,12 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Tailwind 3.4 has no pointer-coarse variant; the wordmark footer sizes
+    // tap targets with it, so register the media query here.
+    ({ addVariant }) => {
+      addVariant('pointer-coarse', '@media (pointer: coarse)');
+      addVariant('pointer-fine', '@media (pointer: fine)');
+    },
+  ],
 };
